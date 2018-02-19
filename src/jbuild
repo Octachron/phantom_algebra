@@ -1,0 +1,6 @@
+(jbuild_version 1)
+
+(library (
+         (name phantom_algebra)
+         (public_name phantom_algebra)
+))
