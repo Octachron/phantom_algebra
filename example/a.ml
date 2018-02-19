@@ -37,6 +37,12 @@ let error = cross (vec4 0. 0. 0. 1.) (vec4 0. 1. 0. 0.)
 let error' = cross (scalar 1.) (scalar 2.)
 *)
 
+module X :sig val t: _ scalar end = struct
+let fn v w =
+  (cross v w) + scalar 1.
+let t = fn (vec2 0. 1.) (vec2 1. 0.)
+end
+
 let () =
 Format.eprintf
   "@[<v>v=%a@,m=%a@,m2=%a@,z=%a@,w=%a@,s=%a@,v'=%a@,v''=%a@,v'''=%a@,\

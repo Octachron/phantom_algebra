@@ -2,11 +2,21 @@
 
 (executable (
             (name a)
+            (modules (A))
             (libraries (phantom_algebra))
 ))
 
+
+
+(executable (
+            (name bug)
+            (modules (Bug))
+            (libraries (phantom_algebra))
+))
+
+
 (alias
  ((name    runtest)
-  (deps    (a.exe))
+  (deps    (a.exe bug.exe))
   (action  (run ${<}))
 ))
