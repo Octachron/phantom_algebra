@@ -1,84 +1,6 @@
-type k = float
-type 'a one = [`one of 'a]
-type 'a z = [`zero of 'a]
-type 'a two = [`two of 'a]
-type 'a three = [`three of 'a]
-type 'a four = [`four of 'a]
+open Type_functions
 
-exception Unexpected_ranks of int list
-
-
-
-type ('a,'b,'c) any =
-  [< `zero of 'b & 'a | `one of 'b & 'a | `two of 'b & 'a] as 'c
-
-type ('a, 'b,'c, 'parameters) product =
-  [<`zero of 'b & (* scalar broadcasting *)
-             [< `zero of 'c & 'p1 z
-             | `one of 'c & 'p1 one
-             | `two of 'c & 'p1 two]
-  | `one of 'b &
-            [< `zero of 'c & 'p1 one
-            | `one of 'c & 'p1 one
-            | `two of 'c & 'p1 one]
-  | `two of 'b &
-            [< `zero of 'c & 'p1 two
-            | `one of 'c & 'p1 one
-            | `two of 'c & 'p1 two]
-  ] as 'a
-  constraint 'parameters = 'p1 * 'p2 * 'p3
-(** (x,y,z,_ ) product computes the rank of x * y and
-    put the result inside z *)
-
-type ('a, 'b,'c, 'parameters) rank_diff =
-  [<
-  | `one of 'b & [< `one of 'c & 'p1 z]
-  | `two of 'b &
-            [< `one of 'c & 'p1 one
-            | `two of 'c & 'p1 z ]
-  ] as 'a
-  constraint 'parameters = 'p1
-(** (x,y,z,_ ) diff computes the rank of x - y and
-    put the result inside z *)
-
-
-type ('a, 'b,'c, 'parameters) sum =
-  [<`zero of 'b & (* scalar broadcasting *)
-             [< `zero of 'c & 'p1 z
-             | `one of 'c & 'p1 one
-             | `two of 'c & 'p1 two]
-  | `one of 'b &
-            [< `zero of 'c & 'p1 one
-            | `one of 'c & 'p1 one ]
-  | `two of 'b &
-            [< `zero of 'c & 'p1 two
-            | `two of 'c & 'p1 two]
-  ] as 'a
-  constraint 'parameters = 'p1 * 'p2 * 'p3
-(** (x,y,z,_ ) sum computes the rank of x + y and
-    put the result inside z *)
-
-
-
-type ('a, 'b,'c, 'parameters) div =
-  [<`zero of 'b & (* scalar broadcasting *)
-             [< `zero of 'c & 'p1 z]
-  | `one of 'b &
-            [< `zero of 'c & 'p1 one
-            | `one of 'c & 'p1 one]
-  | `two of 'b &
-            [< `zero of 'c & 'p1 two]
-  ] as 'a
-  constraint 'parameters = 'p1 * 'p2 * 'p3
-(** (x,y,z,_ ) div computes the rank of x / y and
-    put the result inside z *)
-
-
-type ( 'dim, 'res, 'parameters ) cross =
-  [< `two of 'res & ('p2 * 'p1 z) | `three of 'res & ('p2 three * 'p1 one) ]
-  as 'dim
-  constraint 'parameters = 'p1 * 'p2
-
+let unexpected ranks = raise (Interface.Unexpected_ranks ranks)
 
 type (+'dim, +'rank) index = int
 
@@ -133,7 +55,7 @@ let pp ppf a = match a.rank with
       line 0;
       for i = 1 to dim - 1 do Format.pp_print_cut ppf (); line i done;
     Format.fprintf ppf "@]"
-  | n -> raise (Unexpected_ranks [n])
+  | n -> unexpected [n]
 
 
 
@@ -147,6 +69,19 @@ type +'x vec4 = ('a four,'b one) t constraint 'x = 'a * 'b
 type +'x mat2 = ('a two,'b two) t constraint 'x = 'a * 'b
 type +'x mat3 = ('a three,'b two) t constraint 'x = 'a * 'b
 type +'x mat4 = ('a four,'b two) t constraint 'x = 'a * 'b
+
+
+let ( |+| ) {data=a;_} {data=b;_} =
+  let l = Array.length a + Array.length b in
+  let sep = Array.length a in
+  let data = Array.make l 0. in
+  for i = 0 to sep - 1 do
+    data.(i) <- a.(i)
+  done;
+  for i = sep to l - 1 do
+    data.(i) <- b.(i-sep)
+  done;
+  { rank = 1 ; data }
 
 let scalar x = { rank = 0; data = [|x|] }
 let vec2 x y = {rank=1; data = [|x;y|]}
@@ -181,7 +116,7 @@ let slice (t: (_,_) t) (n:(_ index)) = match t.rank with
       { rank=1; data= Array.init dim
                     (fun i -> t.data.( i + dim * (n land 0x3) ))
       }
-  | n -> raise (Unexpected_ranks [n])
+  | n -> unexpected [n]
 
 let (.%[]) x = slice x
 
@@ -189,7 +124,7 @@ let get (t: (_,_) t) (n:(_ index)) = match t.rank with
   | 0 -> t.data.(0)
   | 1 -> t.data.(n land 0x3 )
   | 2 -> t.data.( (n lsr 2) land 0x3 + mat_dim t * (n land 0x3) )
-  | n -> raise (Unexpected_ranks [n])
+  | n -> unexpected [n]
 
 let (.%()) x = get x
 
@@ -247,7 +182,7 @@ let ( * ) a b = match a.rank, b.rank with
     let data = Array.init (Array.length a)
         (fun n -> sum (n / dim) (n mod dim)) in
     { rank = 2; data }
-  | x, y  -> raise (Unexpected_ranks [x;y])
+  | x, y  -> unexpected [x;y]
 
 
 let ( / ) a b =

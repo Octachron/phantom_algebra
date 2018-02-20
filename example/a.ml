@@ -1,4 +1,4 @@
-open Phantom_algebra
+open Phantom_algebra.Core
 
 let v = vec2 0. 1.
 let m = mat2 (vec2 1. 0.) (scalar 2. * v)
@@ -32,6 +32,9 @@ let f2 = e1 ^ e2
 
 let m_one = cross (vec2 0. 1.) (vec2 1. 0.)
 
+let v4 = scalar 0. |+| vec2 1. 2. |+| scalar 3.
+let v4' = vec2 1. 2. |+| vec2 3. 4.
+
 (*
 let error = cross (vec4 0. 0. 0. 1.) (vec4 0. 1. 0. 0.)
 let error' = cross (scalar 1.) (scalar 2.)
@@ -46,7 +49,7 @@ end
 let () =
 Format.eprintf
   "@[<v>v=%a@,m=%a@,m2=%a@,z=%a@,w=%a@,s=%a@,v'=%a@,v''=%a@,v'''=%a@,\
-   r=%a@,-xy?=%a@,e1=%a@,e2=%a@,f=%a@,mxy=%a@,e3=%a@,f2=%a@,-1=%a@]@."
+   r=%a@,-xy?=%a@,e1=%a@,e2=%a@,f=%a@,mxy=%a@,e3=%a@,f2=%a@,-1=%a@,v4=%a@]@."
   pp v
   pp m
   pp m2
@@ -65,3 +68,4 @@ Format.eprintf
   pp e3
   pp f2
   pp m_one
+  pp v4
