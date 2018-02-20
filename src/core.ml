@@ -25,6 +25,18 @@ let ty = 0b11101
 let tz = 0b11110
 let tt = 0b11111
 
+type (+'dim, +'rank) swizzle = int
+
+let dim_mask = 0xF00
+let x' = 0x200
+let y' = 0x201
+let z' = 0x202
+let t' = 0x203
+
+let (&) x y =
+  let nx = x lsr 8 in
+  x + ((y land 0xFF) lsl nx) + y land dim_mask
+
 let index_rank x = x lsr 4
 
 type (+'dim,+'rank) t = {rank:int; data: float array }
@@ -149,6 +161,14 @@ let get (t: (_,_) t) (n:(_ index)) = match t.rank with
 
 let (.%()) x = get x
 
+
+let swizzle { data = v; _ } index =
+  let size = index lsr 9 in
+  let data = Array.init size
+      (fun i -> v.( 0x3 land (index lsr (i lsl 1)) )) in
+  { rank=1; data }
+
+let (.%{}) x = swizzle x
 
 let map f x = { x with data = Array.map f x.data }
 let map2 f x y = { x with data = Array.map2 f x.data y.data }

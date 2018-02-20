@@ -72,6 +72,20 @@ type ( 'dim, 'res, 'parameters ) cross =
   as 'dim
   constraint 'parameters = 'p1 * 'p2
 
+
+type ('dim1,'dim2,'dim3,'p) swizzle_sum =
+    [< `one of 'dim2 &
+               [< `one of 'dim3 & 'p two
+               | `two of 'dim3 & 'p three
+               | `three of 'dim3 & 'p four
+               ]
+    | `two of 'dim2 &
+              [< `one of 'dim3 & 'p three
+              | `two of 'dim3 & 'p four
+              ]
+    | `three of 'dim2 & [< `one of 'dim3 & 'p four]
+    ] as 'dim1
+
 type ('rank1,'rank2, 'dim1,'dim2,'dim3,'p) nat_sum =
   [< `zero of 'rank2 &
               [< `zero of 'dim3 & 'p two

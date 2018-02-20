@@ -10,11 +10,20 @@ exception Unexpected_ranks of int list
 (** { 1 Index data type } *)
 module type Index = sig
   type (+'dim,+'rank) index
+  type (+'input_dim,+'output_dim) swizzle
 
   val x: ([< _ one| _ two| _ three| _ four], [ | _ one]) index
   val y: ([< _ two| _ three| _ four], [ | _ one]) index
   val z: ([< _ three| _ four], [ | _ one]) index
   val t: ([< _ four], [ | _ one]) index
+
+  val x': ([< _ one| _ two | _ three| _ four], [ | _ one]) swizzle
+  val y': ([< _ two| _ three| _ four], [ | _ one]) swizzle
+  val z': ([< _ three| _ four], [ | _ one]) swizzle
+  val t': ([< _ four], [ | _ one]) swizzle
+
+  val (&): ( 'input_dim, ('dim1,'dim2,'dim3,_) swizzle_sum ) swizzle
+      -> ('input_dim,'dim2) swizzle -> ('input_dim,'dim3) swizzle
 
   val xx: ([< _ one|_ two|_ three|_ four], [ | _ two]) index
   val yx: ([< _ two|_ three|`four], [ | _ two]) index
@@ -130,6 +139,7 @@ end
 module type Indexing = sig
 
   type (+'dim,+'rank) index
+  type (+'dim,+'rank) swizzle
   type (+'dim,+'rank) t
 
   (** [slice t n] or [ t.%[n] ] computes a slice of rank
@@ -144,6 +154,13 @@ module type Indexing = sig
   (** [t.%(x)] returns the value of the tensor at index [x] *)
   val get: ('dim,'rank) t -> ('dim,'rank) index -> k
   val (.%()): ('dim,'rank) t -> ('dim,'rank) index -> k
+
+    (** [v.%{x&t&x&t}] returns a new vector of by picking the values of
+        v at the corresponding indices*)
+  val swizzle: ('dim, _ one) t -> ('dim,'new_dim) swizzle ->
+    ('new_dim,_ one) t
+  val (.%{} ): ('dim, _ one) t -> ('dim,'new_dim) swizzle ->
+    ('new_dim,_ one) t
 end
 
 module type S = sig
@@ -151,6 +168,7 @@ module type S = sig
   include Index
   include Indexing with
     type ('a,'b) index := ('a,'b) index
+    and type ('a,'b) swizzle := ('a,'b) swizzle
     and type ('a,'b) t := ('a,'b) t
 
 end
