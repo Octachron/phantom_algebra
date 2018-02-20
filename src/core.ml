@@ -83,10 +83,31 @@ let ( |+| ) {data=a;_} {data=b;_} =
   done;
   { rank = 1 ; data }
 
+
 let scalar x = { rank = 0; data = [|x|] }
 let vec2 x y = {rank=1; data = [|x;y|]}
 let vec3 x y z = { rank=1; data = [|x;y;z|] }
 let vec4 x y z t = { rank=1; data = [|x;y;z;t|] }
+
+let vec2' a =
+  if a.rank = 0 then
+    { rank = 1; data = Array.make 2 a.data.(0)}
+  else
+    { rank=1; data= Array.copy a.data }
+
+let vec_stretch k a =
+  if a.rank = 0 then
+    { rank = 1; data = Array.make 2 a.data.(0)}
+  else
+    let len = Array.length a.data in
+    let data = Array.make k a.data.(len-1) in
+    Array.blit a.data 0 data 0 len;
+    { rank=1; data }
+
+let vec3' x = vec_stretch 3 x
+let vec4' x = vec_stretch 4 x
+
+
 
 let mat2 {data=a;_} {data=b;_} =
   { rank = 2; data = [| a.(0); a.(1); b.(0); b.(1) |] }

@@ -17,6 +17,6 @@
 
 (alias
  ((name    runtest)
-  (deps    (a.exe bug.exe))
+  (deps    (a.exe))
   (action  (run ${<}))
 ))

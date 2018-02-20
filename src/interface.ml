@@ -57,6 +57,13 @@ module type Core = sig
   val vec3: k -> k -> k -> _ vec3
   val vec4: k -> k -> k -> k -> _ vec4
 
+  (** [vec$n' v] extends a vector of dimension [d <= n]
+      to a vector of dimension v by repeting the last value
+      of the vector *)
+  val vec2': (_ two, [< _ one | _ z] ) t -> _ vec2
+  val vec3': ([< _ two| _ three] , [< _ one | _ z] ) t -> _ vec4
+  val vec4': ([< _ two| _ three | _ four ] , [< _ one | _ z] ) t -> _ vec3
+
   val mat2: _ vec2 -> _ vec2 -> _ mat2
   val mat3: _ vec3 -> _ vec3 -> _ vec3 -> _ mat3
   val mat4: _ vec4 -> _ vec4 -> _ vec4 -> _ vec4 -> _ mat4

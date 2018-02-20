@@ -35,6 +35,10 @@ let m_one = cross (vec2 0. 1.) (vec2 1. 0.)
 let v4 = scalar 0. |+| vec2 1. 2. |+| scalar 3.
 let v4' = vec2 1. 2. |+| vec2 3. 4.
 
+let sw = v4 .%{t'&z'&y'&x'}
+
+let stretch = vec4' (vec2 3. 2. |+| scalar 1.)
+
 (*
 let error = cross (vec4 0. 0. 0. 1.) (vec4 0. 1. 0. 0.)
 let error' = cross (scalar 1.) (scalar 2.)
@@ -47,9 +51,10 @@ let t = fn (vec2 0. 1.) (vec2 1. 0.)
 end
 
 let () =
-Format.eprintf
+Format.printf
   "@[<v>v=%a@,m=%a@,m2=%a@,z=%a@,w=%a@,s=%a@,v'=%a@,v''=%a@,v'''=%a@,\
-   r=%a@,-xy?=%a@,e1=%a@,e2=%a@,f=%a@,mxy=%a@,e3=%a@,f2=%a@,-1=%a@,v4=%a@]@."
+   r=%a@,-xy?=%a@,e1=%a@,e2=%a@,f=%a@,mxy=%a@,e3=%a@,f2=%a@,-1=%a@,v4=%a@,\
+   stretch=%a@,swizzle=%a@]@."
   pp v
   pp m
   pp m2
@@ -69,3 +74,5 @@ Format.eprintf
   pp f2
   pp m_one
   pp v4
+  pp stretch
+  pp sw
