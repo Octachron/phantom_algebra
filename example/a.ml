@@ -1,16 +1,19 @@
 open Phantom_algebra.Core
 
-let v = vec2 0. 1.
-let m = mat2 (vec2 1. 0.) (scalar 2. * v)
-let m2 = m * m
-let z = v * m
-let w = vec3 0. 0. 1.
-let s = scalar 7.
-let w = v + vec2 1. 1.
-let v' = s + v
-let v'' = s * v
+let (|?) x name = Format.printf "%s=%a@." name pp x; x
 
-let v''' = v' * ( scalar 1. + v'')
+let v = vec2 0. 1. |? "v"
+let m = mat2 (vec2 1. 0.) (scalar 2. * v) |? "m"
+let m2 = m * m  |? "m2"
+let ez = v * m  |? "ee"
+
+let ew = vec3 0. 0. 1.  |? "ew"
+let s = scalar 7.  |? "s"
+let ew = v + vec2 1. 1.  |? "ew"
+let v' = s + v  |? "v'"
+let v'' = s * v  |? "v''"
+
+let v''' = v' * ( scalar 1. + v'') |? "v'''"
 
 let xyrot theta = mat3
     (vec3 (cos theta) (sin theta) 0.)
@@ -19,24 +22,30 @@ let xyrot theta = mat3
 
 
 let pi = 4. *. atan 1.
-let r = xyrot (pi /.6.)
+let r = xyrot (pi /.6.) |? "r"
 
-let e1 = vec3 1. 0. 0.
-let e2 = xyrot (pi /. 2.) * e1
+let e1 = vec3 1. 0. 0. |? "e1"
+let e2 = xyrot (pi /. 2.) * e1 |? "e2"
 
-let f = v.%[x]
-let mxy = r.%[yy]
+let f = v.%[x] |? "f"
+let ryy = r.%[yy] |? "ryy"
+let rx = r.%[x] |? "rx"
 
-let e3 = cross e1 e2
-let f2 = e1 ^ e2
+let e3 = cross e1 e2 |? "e3"
+let f2 = e1 ^ e2 |? "f2"
 
-let m_one = cross (vec2 0. 1.) (vec2 1. 0.)
+let m_one = cross (vec2 0. 1.) (vec2 1. 0.) |? "m_one"
 
-let v4 = scalar 0. |+| vec2 1. 2. |+| scalar 3.
-let v4' = vec2 1. 2. |+| vec2 3. 4.
+let v4 = scalar 0. |+| vec2 1. 2. |+| scalar 3. |? "v4"
+let v4' = vec2 1. 2. |+| vec2 3. 4. |? "v4'"
 
-let sw = v4 .%{t'&z'&y'&x'}
+let sel = w&z&y&x
+let sw = v4 .%[sel] |? "sw"
 
+let eye = mat2 (vec2 1. 0.) (vec2 0. 1.) |? "eye"
+let msw = eye.%[y&x] |? "msw"
+
+let diag = eye.%[xx&yy] |? "diag"
 let stretch = vec4' (vec2 3. 2. |+| scalar 1.)
 
 (*
@@ -49,30 +58,3 @@ let fn v w =
   (cross v w) + scalar 1.
 let t = fn (vec2 0. 1.) (vec2 1. 0.)
 end
-
-let () =
-Format.printf
-  "@[<v>v=%a@,m=%a@,m2=%a@,z=%a@,w=%a@,s=%a@,v'=%a@,v''=%a@,v'''=%a@,\
-   r=%a@,-xy?=%a@,e1=%a@,e2=%a@,f=%a@,mxy=%a@,e3=%a@,f2=%a@,-1=%a@,v4=%a@,\
-   stretch=%a@,swizzle=%a@]@."
-  pp v
-  pp m
-  pp m2
-  pp z
-  pp w
-  pp s
-  pp v'
-  pp v''
-  pp v'''
-  pp r
-  pp (r * r * r * r * r * r)
-  pp e1
-  pp e2
-  pp f
-  pp mxy
-  pp e3
-  pp f2
-  pp m_one
-  pp v4
-  pp stretch
-  pp sw

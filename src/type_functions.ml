@@ -73,7 +73,7 @@ type ( 'dim, 'res, 'parameters ) cross =
   constraint 'parameters = 'p1 * 'p2
 
 
-type ('dim1,'dim2,'dim3,'p) swizzle_sum =
+type ('dim1,'dim2,'dim3,'p) simple_sum =
     [< `one of 'dim2 &
                [< `one of 'dim3 & 'p two
                | `two of 'dim3 & 'p three
@@ -109,3 +109,35 @@ type ('rank1,'rank2, 'dim1,'dim2,'dim3,'p) nat_sum =
                       ]
             ]
   ] as 'rank1
+
+
+(* (dim + rank) (dim + len + rank ) + (dim,rank) *)
+type ('tensor_rank,'index_rank,'res_rank,'dim,'res_dim, 'len, 'parameters)
+    superindexing =
+  [< `two of
+        'index_rank &
+        [< `two of (* m.{xx&xy} *)
+             'len &
+             [< `one of 'res_rank & 'p z
+             | `two of 'res_dim * 'res_rank & 's two * 'p one
+             | `three of 'res_dim * 'res_rank & 's three * 'p one
+             | `four of 'res_dim * 'res_rank & 's four * 'p one
+             ]
+        | `one of (* m.{x} or m.{x&…&x_k} with k = dim m ⇒ dim = dim m *)
+             'dim * 'len &
+             'res_dim *
+             [< `one of 'res_rank & 'p one (*m.{x} ⇒ rank=1, dim=dim m)*)
+               (* vv  m.{x&…xy} ⇒ rank=2, dim = dim m vv*)
+             | `two of 'dim * 'res_rank  & 'p two * 's two
+             | `three of 'dim * 'res_rank  & 'p three * 's two
+             | `four of 'dim * 'res_rank  & 'p four * 's two
+             ]
+        ]
+    | `one of 'len &
+              [< `one of 'res_rank & 'p z (* v.{x}: scalar *)
+              | `two of 'res_rank * 'res_dim & 'p one * 's two
+              | `three of 'res_rank * 'res_dim & 'p one * 's three
+              | `four of 'res_rank * 'res_dim & 'p one * 's four
+              ]
+        ] as 'tensor_rank
+constraint 'parameters = 'p * 's

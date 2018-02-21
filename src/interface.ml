@@ -9,40 +9,36 @@ exception Unexpected_ranks of int list
 
 (** { 1 Index data type } *)
 module type Index = sig
-  type (+'dim,+'rank) index
-  type (+'input_dim,+'output_dim) swizzle
 
-  val x: ([< _ one| _ two| _ three| _ four], [ | _ one]) index
-  val y: ([< _ two| _ three| _ four], [ | _ one]) index
-  val z: ([< _ three| _ four], [ | _ one]) index
-  val t: ([< _ four], [ | _ one]) index
+  type (+'dim,+'len,+'rank,+'group) index
 
-  val x': ([< _ one| _ two | _ three| _ four], [ | _ one]) swizzle
-  val y': ([< _ two| _ three| _ four], [ | _ one]) swizzle
-  val z': ([< _ three| _ four], [ | _ one]) swizzle
-  val t': ([< _ four], [ | _ one]) swizzle
+  val x: ([< _ one| _ two| _ three| _ four], _ one, _ one , [`xyzt]) index
+  val y: ([< _ two| _ three| _ four], _ one, _ one , [`xyzt]) index
+  val z: ([< _ three| _ four], _ one, _ one , [`xyzt]) index
+  val w: ([< _ four], _ one, _ one , [`xyzt]) index
 
-  val (&): ( 'input_dim, ('dim1,'dim2,'dim3,_) swizzle_sum ) swizzle
-      -> ('input_dim,'dim2) swizzle -> ('input_dim,'dim3) swizzle
+  val (&): ( 'dim, ('len1,'len2,'len3,_) simple_sum, 'rank, 'group) index
+    -> ('dim,'len2,'rank,'group) index
+    -> ('dim,'len3,'rank,'group) index
 
-  val xx: ([< _ one|_ two|_ three|_ four], [ | _ two]) index
-  val yx: ([< _ two|_ three|`four], [ | _ two]) index
-  val zx: ([< _ three|`four], [ | _ two]) index
-  val tx: ([< _ four], [ | _ two]) index
+  val xx: ([< _ one|_ two|_ three|_ four], _ one, _ two, [`xyzt]) index
+  val yx: ([< _ two|_ three|`four], _ one, _ two, [`xyzt]) index
+  val zx: ([< _ three|`four], _ one, _ two, [`xyzt]) index
+  val wx: ([< _ four], _ one, _ two, [`xyzt]) index
 
-  val xy: ([< _ two|_ three|_ four], [ | _ two]) index
-  val yy: ([< _ two|_ three|_ four], [ | _ two]) index
-  val zy: ([< _ three|_ four], [ | _ two]) index
-  val ty: ([< _ four], [ | _ two]) index
-  val xz: ([<_ three|_ four], [ | _ two]) index
-  val yz: ([< _ three|_ four], [ | _ two]) index
-  val zz: ([< _ three|_ four], [ | _ two]) index
-  val tt: ([< _ four], [ | _ two]) index
+  val xy: ([< _ two|_ three|_ four], _ one, _ two, [`xyzt]) index
+  val yy: ([< _ two|_ three|_ four], _ one, _ two, [`xyzt]) index
+  val zy: ([< _ three|_ four], _ one, _ two, [`xyzt]) index
+  val wy: ([< _ four], _ one, _ two, [`xyzt]) index
+  val xz: ([<_ three|_ four], _ one, _ two, [`xyzt]) index
+  val yz: ([< _ three|_ four], _ one, _ two, [`xyzt]) index
+  val zz: ([< _ three|_ four], _ one, _ two, [`xyzt]) index
+  val wz: ([< _ four], _ one, _ two, [`xyzt]) index
 
-  val xt: ([ | _ four], [ | _ two]) index
-  val yt: ([ | _ four], [ | _ two]) index
-  val zt: ([ | _ four], [ | _ two]) index
-  val tt: ([ | _ four], [ | _ two]) index
+  val xw: ([ | _ four], _ one, _ two, [`xyzt]) index
+  val yw: ([ | _ four], _ one, _ two, [`xyzt]) index
+  val zw: ([ | _ four], _ one, _ two, [`xyzt]) index
+  val ww: ([ | _ four], _ one, _ two, [`xyzt]) index
 end
 
 module type Core = sig
@@ -138,37 +134,28 @@ end
 
 module type Indexing = sig
 
-  type (+'dim,+'rank) index
-  type (+'dim,+'rank) swizzle
+  type (+'dim,+'len,'rank,'group) index
   type (+'dim,+'rank) t
 
   (** [slice t n] or [ t.%[n] ] computes a slice of rank
       [tensor_rank - index_rank], in other words for a vector [v]
       and a matrix [m], [v.%[x]] and [m.%[xx]] are a scalar, whereas
       [m.%[x]] is the first row vector of the matrix [m] *)
-  val slice: ('dim,('rank1,'rank2,'rank3,_) rank_diff ) t ->
-    ('dim,'rank2) index -> ('dim,'rank3) t
-  val (.%[]) : ('dim,('rank1,'rank2,'rank3,_) rank_diff ) t ->
-    ('dim,'rank2) index -> ('dim,'rank3) t
+  val slice: ('dim1,('rank1,'rank2,'rank3, 'dim1,'dim3,'len,_) superindexing) t
+    -> ('dim1, 'len, 'rank2, 'group) index -> ('dim3,'rank3) t
+  val (.%[]): ('dim1,('rank1,'rank2,'rank3, 'dim1,'dim3,'len,_) superindexing) t
+    -> ('dim1, 'len, 'rank2, 'group) index -> ('dim3,'rank3) t
 
   (** [t.%(x)] returns the value of the tensor at index [x] *)
-  val get: ('dim,'rank) t -> ('dim,'rank) index -> k
-  val (.%()): ('dim,'rank) t -> ('dim,'rank) index -> k
-
-    (** [v.%{x&t&x&t}] returns a new vector of by picking the values of
-        v at the corresponding indices*)
-  val swizzle: ('dim, _ one) t -> ('dim,'new_dim) swizzle ->
-    ('new_dim,_ one) t
-  val (.%{} ): ('dim, _ one) t -> ('dim,'new_dim) swizzle ->
-    ('new_dim,_ one) t
+  val get: ('dim,'rank) t -> ('dim,_ one, 'rank, 'group) index -> k
+  val (.%()): ('dim,'rank) t -> ('dim, _ one,'rank,'group) index -> k
 end
 
 module type S = sig
   include Core
   include Index
   include Indexing with
-    type ('a,'b) index := ('a,'b) index
-    and type ('a,'b) swizzle := ('a,'b) swizzle
+    type ('a,'b,'c,'d) index := ('a,'b,'c,'d) index
     and type ('a,'b) t := ('a,'b) t
 
 end

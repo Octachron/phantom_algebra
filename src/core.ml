@@ -2,42 +2,40 @@ open Type_functions
 
 let unexpected ranks = raise (Interface.Unexpected_ranks ranks)
 
-type (+'dim, +'rank) index = int
+type (+'input_dim,+'output_dim,+'rank,+'group) index = int
 
-let x = 0
-let y = 1
-let z = 2
-let t = 3
-let xx = 0b10000
-let xy = 0b10001
-let xz = 0b10010
-let xt = 0b00011
-let yx = 0b10100
-let yy = 0b10101
-let yz = 0b10110
-let yt = 0b10111
-let zx = 0b11000
-let zy = 0b11001
-let zz = 0b11010
-let zt = 0b11011
-let tx = 0b11100
-let ty = 0b11101
-let tz = 0b11110
-let tt = 0b11111
 
-type (+'dim, +'rank) swizzle = int
+let ilen x = 0x3F land (x lsr 18)
+let shift x = 0xFF land (x lsr 16)
+let irank x = x lsr 24
+let x = 0x1040000
+let y = 0x1040001
+let z = 0x1040002
+let w = 0x1040003
 
-let dim_mask = 0xF00
-let x' = 0x200
-let y' = 0x201
-let z' = 0x202
-let t' = 0x203
+let xx = 0x2040000
+let xy = 0x2040001
+let xz = 0x2040002
+let xw = 0x2040003
+let yx = 0x2040004
+let yy = 0x2040005
+let yz = 0x2040006
+let yw = 0x2040007
+let zx = 0x2040008
+let zy = 0x2040009
+let zz = 0x204000A
+let zw = 0x204000B
+let wx = 0x204000C
+let wy = 0x204000D
+let wz = 0x204000E
+let ww = 0x204000F
+
+
+let dim_mask = 0xFF0000
 
 let (&) x y =
-  let nx = x lsr 8 in
-  x + ((y land 0xFF) lsl nx) + y land dim_mask
-
-let index_rank x = x lsr 4
+  let nx = shift x in
+  x + ((y land 0xFFFF) lsl nx) + y land dim_mask
 
 type (+'dim,+'rank) t = {rank:int; data: float array }
 
@@ -50,17 +48,17 @@ let mat_dim a = match Array.length a.data with
 let pp ppf a = match a.rank with
   | 0 -> Format.pp_print_float ppf a.data.(0)
   | 1 ->
-    Format.fprintf ppf "@[(%f" a.data.(0);
+    Format.fprintf ppf "@[(%g" a.data.(0);
     for i=1 to (Array.length a.data -1) do
-      Format.fprintf ppf "@ %f" a.data.(i)
+      Format.fprintf ppf "@ %g" a.data.(i)
     done;
     Format.fprintf ppf ")@]"
   | 2 ->
     let dim = mat_dim a in
     let line i =
-      Format.fprintf ppf "@[| %f" a.data.(dim * i);
+      Format.fprintf ppf "@[|% g" a.data.(dim * i);
     for j=1 to (dim-1) do
-      Format.fprintf ppf "@ %f" a.data.(dim * i + j)
+      Format.fprintf ppf "@,% g" a.data.(dim * i + j)
     done;
     Format.fprintf ppf " |@]" in
     Format.fprintf ppf "@[<v>";
@@ -138,17 +136,48 @@ let mat4 {data=a;_} {data=b;_} {data=c; _ } {data=d;_} =
   }
 
 
-let slice (t: (_,_) t) (n:(_ index)) = match t.rank with
+
+let swizzle v index =
+  let size = ilen index in
+  Array.init size
+    (fun i ->
+       let pos = i lsl 2 in
+       let index' = index lsr pos in
+       let masked = 0xF land index' in
+       v.(masked)
+    )
+
+let slice (t: (_,_) t) (n:(_ index)) =
+  match t.rank with
   | 0 -> scalar t.data.(0)
-  | 1 -> scalar t.data.(n land 0x3)
+  | 1 ->
+    if ilen n = 1 then
+      scalar t.data.(n land 0xF)
+    else { rank=1; data = swizzle t.data n }
   | 2 ->
     let dim = mat_dim t in
-    if index_rank n = 1 then
-      scalar @@ t.data.( dim * ( 0x3 land n) + ((n lsr 2) land 0x3) )
-    else
+    let len = ilen n in
+    if irank n = 2 then
+      if len = 1 then
+        scalar @@ t.data.( dim * ( 0x3 land n) + ((n lsr 2) land 0x3) )
+      else
+        { rank=1; data = Array.init len (fun i ->
+              let s = n lsr (i lsl 3) in
+              t.data.( dim * (0x3 land s) + (((n lsr 2) land 0x3) )))
+        }
+    else if len = 1 then
       { rank=1; data= Array.init dim
                     (fun i -> t.data.( i + dim * (n land 0x3) ))
       }
+    else
+      let data = Array.make (dim * dim) 0. in
+      for i = 0 to dim - 1 do
+        let s = 0x3 land ( n lsr (i lsl 3) ) in
+        for j = 0 to dim - 1 do
+          data.(i * dim + j) <- t.data.( s * dim + j)
+        done;
+      done;
+      { rank=2; data}
   | n -> unexpected [n]
 
 let (.%[]) x = slice x
@@ -162,11 +191,6 @@ let get (t: (_,_) t) (n:(_ index)) = match t.rank with
 let (.%()) x = get x
 
 
-let swizzle { data = v; _ } index =
-  let size = index lsr 9 in
-  let data = Array.init size
-      (fun i -> v.( 0x3 land (index lsr (i lsl 1)) )) in
-  { rank=1; data }
 
 let (.%{}) x = swizzle x
 
