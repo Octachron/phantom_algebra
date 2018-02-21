@@ -12,33 +12,82 @@ module type Index = sig
 
   type (+'dim,+'len,+'rank,+'group) index
 
-  val x: ([< _ one| _ two| _ three| _ four], _ one, _ one , [`xyzt]) index
-  val y: ([< _ two| _ three| _ four], _ one, _ one , [`xyzt]) index
-  val z: ([< _ three| _ four], _ one, _ one , [`xyzt]) index
-  val w: ([< _ four], _ one, _ one , [`xyzt]) index
 
+  (** Index concatenation *)
   val (&): ( 'dim, ('len1,'len2,'len3,_) simple_sum, 'rank, 'group) index
     -> ('dim,'len2,'rank,'group) index
     -> ('dim,'len3,'rank,'group) index
 
-  val xx: ([< _ one|_ two|_ three|_ four], _ one, _ two, [`xyzt]) index
-  val yx: ([< _ two|_ three|`four], _ one, _ two, [`xyzt]) index
-  val zx: ([< _ three|`four], _ one, _ two, [`xyzt]) index
-  val wx: ([< _ four], _ one, _ two, [`xyzt]) index
 
-  val xy: ([< _ two|_ three|_ four], _ one, _ two, [`xyzt]) index
-  val yy: ([< _ two|_ three|_ four], _ one, _ two, [`xyzt]) index
-  val zy: ([< _ three|_ four], _ one, _ two, [`xyzt]) index
-  val wy: ([< _ four], _ one, _ two, [`xyzt]) index
-  val xz: ([<_ three|_ four], _ one, _ two, [`xyzt]) index
-  val yz: ([< _ three|_ four], _ one, _ two, [`xyzt]) index
-  val zz: ([< _ three|_ four], _ one, _ two, [`xyzt]) index
-  val wz: ([< _ four], _ one, _ two, [`xyzt]) index
+  (** {1 XYZW group} *)
+  val x': ([< _ one| _ two| _ three| _ four], _ one, _ one , [`xyzw]) index
+  val y': ([< _ two| _ three| _ four], _ one, _ one , [`xyzw]) index
+  val z': ([< _ three| _ four], _ one, _ one , [`xyzw]) index
+  val w': ([< _ four], _ one, _ one , [`xyzw]) index
 
-  val xw: ([ | _ four], _ one, _ two, [`xyzt]) index
-  val yw: ([ | _ four], _ one, _ two, [`xyzt]) index
-  val zw: ([ | _ four], _ one, _ two, [`xyzt]) index
-  val ww: ([ | _ four], _ one, _ two, [`xyzt]) index
+  val xx': ([< _ one|_ two|_ three|_ four], _ one, _ two, [`xyzw]) index
+  val yx': ([< _ two|_ three|`four], _ one, _ two, [`xyzw]) index
+  val zx': ([< _ three|`four], _ one, _ two, [`xyzw]) index
+  val wx': ([< _ four], _ one, _ two, [`xyzw]) index
+  val xy': ([< _ two|_ three|_ four], _ one, _ two, [`xyzw]) index
+  val yy': ([< _ two|_ three|_ four], _ one, _ two, [`xyzw]) index
+  val zy': ([< _ three|_ four], _ one, _ two, [`xyzw]) index
+  val wy': ([< _ four], _ one, _ two, [`xyzw]) index
+  val xz': ([<_ three|_ four], _ one, _ two, [`xyzw]) index
+  val yz': ([< _ three|_ four], _ one, _ two, [`xyzw]) index
+  val zz': ([< _ three|_ four], _ one, _ two, [`xyzw]) index
+  val wz': ([< _ four], _ one, _ two, [`xyzw]) index
+  val xw': ([ | _ four], _ one, _ two, [`xyzw]) index
+  val yw': ([ | _ four], _ one, _ two, [`xyzw]) index
+  val zw': ([ | _ four], _ one, _ two, [`xyzw]) index
+  val ww': ([ | _ four], _ one, _ two, [`xyzw]) index
+
+
+  (** {1 RGBA} *)
+  val r': ([< _ one| _ two| _ three| _ four], _ one, _ one , [`rgba]) index
+  val g': ([< _ two| _ three| _ four], _ one, _ one , [`rgba]) index
+  val b': ([< _ three| _ four], _ one, _ one , [`rgba]) index
+  val a': ([< _ four], _ one, _ one , [`rgba]) index
+
+  val rr': ([< _ one|_ two|_ three|_ four], _ one, _ two, [`rgba]) index
+  val gr': ([< _ two|_ three|`four], _ one, _ two, [`rgba]) index
+  val br': ([< _ three|`four], _ one, _ two, [`rgba]) index
+  val ar': ([< _ four], _ one, _ two, [`rgba]) index
+  val rg': ([< _ two|_ three|_ four], _ one, _ two, [`rgba]) index
+  val gg': ([< _ two|_ three|_ four], _ one, _ two, [`rgba]) index
+  val bg': ([< _ three|_ four], _ one, _ two, [`rgba]) index
+  val ag': ([< _ four], _ one, _ two, [`rgba]) index
+  val rb': ([<_ three|_ four], _ one, _ two, [`rgba]) index
+  val gb': ([< _ three|_ four], _ one, _ two, [`rgba]) index
+  val bb': ([< _ three|_ four], _ one, _ two, [`rgba]) index
+  val ab': ([< _ four], _ one, _ two, [`rgba]) index
+  val ra': ([ | _ four], _ one, _ two, [`rgba]) index
+  val ga': ([ | _ four], _ one, _ two, [`rgba]) index
+  val ba': ([ | _ four], _ one, _ two, [`rgba]) index
+  val aa': ([ | _ four], _ one, _ two, [`rgba]) index
+
+    (** {1 STPQ group} *)
+  val s': ([< _ one| _ two| _ three| _ four], _ one, _ one , [`stpq]) index
+  val t': ([< _ two| _ three| _ four], _ one, _ one , [`stpq]) index
+  val p': ([< _ three| _ four], _ one, _ one , [`stpq]) index
+  val q': ([< _ four], _ one, _ one , [`stpq]) index
+
+  val ss': ([< _ one|_ two|_ three|_ four], _ one, _ two, [`stpq]) index
+  val ts': ([< _ two|_ three|`four], _ one, _ two, [`stpq]) index
+  val ps': ([< _ three|`four], _ one, _ two, [`stpq]) index
+  val qs': ([< _ four], _ one, _ two, [`stpq]) index
+  val st': ([< _ two|_ three|_ four], _ one, _ two, [`stpq]) index
+  val tt': ([< _ two|_ three|_ four], _ one, _ two, [`stpq]) index
+  val pt': ([< _ three|_ four], _ one, _ two, [`stpq]) index
+  val qt': ([< _ four], _ one, _ two, [`stpq]) index
+  val sp': ([<_ three|_ four], _ one, _ two, [`stpq]) index
+  val tp': ([< _ three|_ four], _ one, _ two, [`stpq]) index
+  val pp': ([< _ three|_ four], _ one, _ two, [`stpq]) index
+  val qp': ([< _ four], _ one, _ two, [`stpq]) index
+  val sq': ([ | _ four], _ one, _ two, [`stpq]) index
+  val tq': ([ | _ four], _ one, _ two, [`stpq]) index
+  val pq': ([ | _ four], _ one, _ two, [`stpq]) index
+  val qq': ([ | _ four], _ one, _ two, [`stpq]) index
 end
 
 module type Core = sig
