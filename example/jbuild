@@ -1,9 +1,10 @@
 (jbuild_version 1)
 
 (executable (
-            (name a)
-            (modules (A))
-            (libraries (phantom_algebra))
+  (name a)
+  (modules (A))
+  (libraries (phantom_algebra))
+  (preprocess (action (run ${bin:cppo} -V OCAML:${ocaml_version} ${<})))
 ))
 
 

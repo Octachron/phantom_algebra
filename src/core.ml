@@ -182,7 +182,6 @@ let slice (t: (_,_) t) (n:(_ index)) =
       { rank=2; data}
   | n -> unexpected [n]
 
-let (.%[]) x = slice x
 
 let get (t: (_,_) t) (n:(_ index)) = match t.rank with
   | 0 -> t.data.(0)
@@ -190,12 +189,19 @@ let get (t: (_,_) t) (n:(_ index)) = match t.rank with
   | 2 -> t.data.( (n lsr 2) land 0x3 + mat_dim t * (n land 0x3) )
   | n -> unexpected [n]
 
+#if OCAML_MAJOR>=4 && OCAML_MINOR>=6
 let (.%()) x = get x
+let (.%[]) x = slice x
+#endif
 
-
-
-let (.%{}) x = swizzle x
-
+let amap2=
+#if OCAML_MAJOR>=4 && OCAML_MINOR>=3
+  Array.map2
+#else
+  fun f x y -> Array.init
+      (min (Array.length x) (Array.length y))
+      (fun i -> f x.(i) y.(i))
+#endif
 let map f x = { x with data = Array.map f x.data }
 let map2 f x y = { x with data = Array.map2 f x.data y.data }
 let smap f x y = map (f x.data.(0)) y

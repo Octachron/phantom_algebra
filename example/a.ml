@@ -27,10 +27,6 @@ let r = xyrot (pi /.6.) |? "r"
 let e1 = vec3 1. 0. 0. |? "e1"
 let e2 = xyrot (pi /. 2.) * e1 |? "e2"
 
-let f = v.%[x'] |? "f"
-let ryy = r.%[yy'] |? "ryy"
-let rx = r.%[x'] |? "rx"
-
 let e3 = cross e1 e2 |? "e3"
 let f2 = e1 ^ e2 |? "f2"
 
@@ -39,15 +35,22 @@ let m_one = cross (vec2 0. 1.) (vec2 1. 0.) |? "m_one"
 let v4 = scalar 0. |+| vec2 1. 2. |+| scalar 3. |? "v4"
 let v4' = vec2 1. 2. |+| vec2 3. 4. |? "v4'"
 
+let stretch = vec4' (vec2 3. 2. |+| scalar 1.)
+let eye = mat2 (vec2 1. 0.) (vec2 0. 1.) |? "eye"
+;;
+#if OCAML_MAJOR>=4 && OCAML_MINOR>=6
+
+let f = v.%[x'] |? "f"
+let ryy = r.%[yy'] |? "ryy"
+let rx = r.%[x'] |? "rx"
+
 let sel = w'&z'&y'&x'
 let sw = v4 .%[sel] |? "sw"
 
-let eye = mat2 (vec2 1. 0.) (vec2 0. 1.) |? "eye"
 let msw = eye.%[y'&x'] |? "msw"
 
 let diag = eye.%[xx'&yy'] |? "diag"
-let stretch = vec4' (vec2 3. 2. |+| scalar 1.)
-
+#endif
 (*
 let error = cross (vec4 0. 0. 0. 1.) (vec4 0. 1. 0. 0.)
 let error' = cross (scalar 1.) (scalar 2.)
