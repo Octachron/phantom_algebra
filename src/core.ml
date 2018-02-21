@@ -203,7 +203,7 @@ let amap2=
       (fun i -> f x.(i) y.(i))
 #endif
 let map f x = { x with data = Array.map f x.data }
-let map2 f x y = { x with data = Array.map2 f x.data y.data }
+let map2 f x y = { x with data = amap2 f x.data y.data }
 let smap f x y = map (f x.data.(0)) y
 
 
@@ -278,7 +278,7 @@ let (+) a b =
     smap (+.) a b
   else if b.rank = 0 then
     smap (+.) b a
-  else { a with data = Array.map2 (+.) a.data b.data }
+  else map2 (+.) a b
 
 let (-) a b =
   if a.rank = 0 then
@@ -287,7 +287,7 @@ let (-) a b =
     { a with
       data = Array.init (Array.length b.data)
           (fun n -> b.data.(n) -. a.data.(0))}
-  else { a with data = Array.map2 (+.) a.data b.data }
+  else map2 (-.) a b
 
 
 let floor a = int_of_float ( a.data.(0) )
