@@ -39,28 +39,87 @@ let (&) x y =
   let nx = shift x in
   x + ((y land 0xFFFF) lsl nx) + y land dim_mask
 
-type (+'dim,+'rank) t = {rank:int; data: float array }
+type (+'dim,+'rank) t = floatarray
 
-let mat_dim a = match Array.length a.data with
-  | 4 -> 2
+module A = struct
+  let len = Array.Floatarray.length
+  let get = Array.Floatarray.unsafe_get
+  let set = Array.Floatarray.unsafe_set
+
+  let (#.) = get
+  let iteri f x =
+    for i = 0 to len x - 1 do
+      f i x#.i
+    done
+
+  let copy x =
+    let len = len x in
+    let a = Array.Floatarray.create len in
+      iteri (set a) x;
+      a
+  let create = Array.Floatarray.create
+  let make n x =
+    let a = create n in
+    iteri (fun i _ -> set a i x) a;
+    a
+  let from_array x =
+    let len = Array.length x in
+    let a = create len in
+    Array.iteri (set a) x;
+    a
+
+  let init n f = let a = Array.Floatarray.create n in
+    for i = 0 to n - 1 do set a i (f i) done;
+    a
+
+  let map f x = init (len x) (fun i -> f x#.i)
+end
+
+
+let dim a = match A.len a with
+  | 0 -> 0
+  | 1 -> 1
+  | 2 -> 2
+  | 3 -> 3
+  | 4 -> 4
+  | 5 -> 2
+  | 9 -> 3
+  | 16 -> 4
+  | _ -> assert false
+
+let rank a = match A.len a with
+  | 0 -> 0
+  | 1 -> 0
+  | 2 -> 1
+  | 3 -> 1
+  | 4 -> 1
+  | 5 -> 2
+  | 9 -> 2
+  | 16 -> 2
+  | _ -> assert false
+
+let (#.) = A.(#.)
+
+let mat_dim a = match A.len a with
+  | 5 -> 2
   | 9 -> 3
   | 16 -> 4
   | n -> int_of_float (sqrt (float_of_int n))
 
-let pp ppf a = match a.rank with
-  | 0 -> Format.pp_print_float ppf a.data.(0)
+let pp ppf a = match rank a with
+  | 0 -> Format.pp_print_float ppf a#.0
   | 1 ->
-    Format.fprintf ppf "@[(%g" a.data.(0);
-    for i=1 to (Array.length a.data -1) do
-      Format.fprintf ppf "@ %g" a.data.(i)
+    Format.fprintf ppf "@[(%g" a#.0;
+    for i=1 to (A.len a -1) do
+      Format.fprintf ppf "@ %g" a#.i
     done;
     Format.fprintf ppf ")@]"
   | 2 ->
     let dim = mat_dim a in
     let line i =
-      Format.fprintf ppf "@[|% g" a.data.(dim * i);
+      Format.fprintf ppf "@[|% g" a#.(dim * i);
     for j=1 to (dim-1) do
-      Format.fprintf ppf "@,% g" a.data.(dim * i + j)
+      Format.fprintf ppf "@,% g" a#.(dim * i + j)
     done;
     Format.fprintf ppf " |@]" in
     Format.fprintf ppf "@[<v>";
@@ -72,7 +131,7 @@ let pp ppf a = match a.rank with
 (* ( A / B) B = A *)
 let mat_div x y =
   let dim = mat_dim x in
-  let left = Array.copy y.data and right = Array.copy x.data in
+  let left = A.copy y and right = A.copy x in
   let perm = Array.init dim (fun n -> n) in
 (*  let (#.) a (i,j) = a.( i * dim + perm.(j) ) in
   let set (//) a (i,j)  y =
@@ -84,10 +143,10 @@ let mat_div x y =
     perm.(i) <- perm.(j); perm.(j) <- tmp; in
   let pivot start =
     let pos = start * dim in
-    let mx = ref (abs_float left.(pos + perm.(start) ) )
+    let mx = ref (abs_float left#.(pos + perm.(start) ) )
     and i = ref start in
     for j = start + 1 to dim -1 do
-      let m = abs_float left.(pos + perm.(j)) in
+      let m = abs_float left#.(pos + perm.(j)) in
       if m > !mx then
         (mx := m; i:=j)
     done;
@@ -97,23 +156,23 @@ let mat_div x y =
     for i = k to dim-1 do
       let i = dim * i in
       let il = i + l' and ik = i + k' in
-      left.(il) <- left.(il) +.  coeff *. left.(ik);
-      right.(il) <- right.(il) +.  coeff *. right.(ik);
+      A.set left il @@ left#.(il) +.  coeff *. left#.(ik);
+      A.set right il @@ right#.(il) +.  coeff *. right#.(ik);
     done;
     for i = 0 to k-1 do
       let i = dim * i in
       let il = i + l' and ik = i + k' in
-      right.(il) <- right.(il) +.  coeff *. right.(ik);
+      A.set right il @@ right#.(il) +.  coeff *. right#.(ik);
     done;
   in
   (* zero upper *)
   for i = 0 to dim - 1 do
     let i' = dim * i in
     pivot i;
-    let x = left.(i' + perm.(i)) in
+    let x = left#.(i' + perm.(i)) in
     if x <> 0. then
       for  j = i + 1 to dim - 1 do
-        let coeff = -. left.(i' + perm.(j)) /. x in
+        let coeff = -. left#.(i' + perm.(j)) /. x in
         if coeff <> 0. then
           col_transf coeff i j
       done
@@ -121,10 +180,10 @@ let mat_div x y =
   (* zero lower *)
   for i = dim-1 downto 0 do
     let i' = dim * i in
-    let x = left.(i' + perm.(i)) in
+    let x = left#.(i' + perm.(i)) in
     if x <> 0. then
       for j = 0 to i-1 do
-      let coeff = -. left.(i' + perm.(j)) /. x in
+      let coeff = -. left#.(i' + perm.(j)) /. x in
       col_transf coeff i j
     done
   done;
@@ -132,9 +191,9 @@ let mat_div x y =
     for j = 0 to dim - 1 do
       let j' = perm.(j) in
       let ij = i * dim + j' in
-      let x = left.(j * dim + j') in
+      let x = left#.(j * dim + j') in
       if x <> 0. then
-        right.(ij) <- right.(ij) /. x
+        A.set right ij @@ right#.(ij) /. x
       done;
   done;
   let data = left in
@@ -142,10 +201,10 @@ let mat_div x y =
     let j' = perm.(j) in
     for i = 0 to dim - 1 do
       let i = dim * i in
-      data.(i + j) <- right.(i + j');
+      A.set data (i + j) @@ right#.(i + j');
     done
   done;
-  { rank=2; data}
+ data
 
 type +'x scalar = ('a, 'b z) t constraint 'x = 'a * 'b
 
@@ -158,183 +217,189 @@ type +'x mat3 = ('a three,'b two) t constraint 'x = 'a * 'b
 type +'x mat4 = ('a four,'b two) t constraint 'x = 'a * 'b
 
 
-let ( |+| ) {data=a;_} {data=b;_} =
-  let l = Array.length a + Array.length b in
-  let sep = Array.length a in
-  let data = Array.make l 0. in
+let ( |+| ) a b =
+  let l = A.len a + A.len b in
+  let sep = A.len a in
+  let data = A.create l in
   for i = 0 to sep - 1 do
-    data.(i) <- a.(i)
+    A.set data i a#.i
   done;
   for i = sep to l - 1 do
-    data.(i) <- b.(i-sep)
+    A.set data i @@ b#.(i-sep)
   done;
-  { rank = 1 ; data }
+  data
 
 
-let scalar x = { rank = 0; data = [|x|] }
-let vec2 x y = {rank=1; data = [|x;y|]}
-let vec3 x y z = { rank=1; data = [|x;y;z|] }
-let vec4 x y z t = { rank=1; data = [|x;y;z;t|] }
+let scalar x = A.from_array [|x|]
+let vec2 x y = A.from_array [|x;y|]
+let vec3 x y z = A.from_array [|x;y;z|]
+let vec4 x y z t = A.from_array [|x;y;z;t|]
 
 let vec2' a =
-  if a.rank = 0 then
-    { rank = 1; data = Array.make 2 a.data.(0)}
+  if rank a = 0 then
+    A.make 2 a#.0
   else
-    { rank=1; data= Array.copy a.data }
+    A.copy a
 
 let vec_stretch k a =
-  if a.rank = 0 then
-    { rank = 1; data = Array.make 2 a.data.(0)}
+  if rank a = 0 then
+    A.make 2 a#.(0)
   else
-    let len = Array.length a.data in
-    let data = Array.make k a.data.(len-1) in
-    Array.blit a.data 0 data 0 len;
-    { rank=1; data }
+    let data = A.create k in
+    A.iteri (A.set data) a;
+    let l = A.len a in
+    let repeated = a#.(l-1) in
+    for i = l to k -1 do
+      A.set data i repeated
+    done;
+    data
 
 let vec3' x = vec_stretch 3 x
 let vec4' x = vec_stretch 4 x
 
 
 
-let mat2 {data=a;_} {data=b;_} =
-  { rank = 2; data = [| a.(0); a.(1); b.(0); b.(1) |] }
-let mat3 {data=a;_} {data=b;_} {data=c; _ } =
-  { rank = 2; data = [| a.(0); a.(1); a.(2);
-                        b.(0); b.(1); b.(2);
-                        c.(0); c.(1); c.(2) |]
-  }
+let mat2 a b = A.from_array
+  [| a#.(0); a#.(1); b#.(0); b#.(1); 0. (* padding *) |]
+let mat3 a b c = A.from_array
+  [| a#.(0); a#.(1); a#.(2);
+     b#.(0); b#.(1); b#.(2);
+     c#.(0); c#.(1); c#.(2) |]
 
-let mat4 {data=a;_} {data=b;_} {data=c; _ } {data=d;_} =
-  { rank = 2; data = [| a.(0); a.(1); a.(2); a.(3);
-                        b.(0); b.(1); b.(2); b.(3);
-                        c.(0); c.(1); c.(2); c.(3);
-                        d.(0); d.(1); d.(2); d.(3);
-                     |]
-  }
+let mat4 a b c d = A.from_array
+  [| a#.(0); a#.(1); a#.(2); a#.(3);
+     b#.(0); b#.(1); b#.(2); b#.(3);
+     c#.(0); c#.(1); c#.(2); c#.(3);
+     d#.(0); d#.(1); d#.(2); d#.(3);
+  |]
 
 
+let mat_len = function
+  | 2 -> 5
+  | 3 -> 9
+  | 4 -> 16
+  | _ -> assert false
 
 let swizzle v index =
   let size = ilen index in
-  Array.init size
+  A.init size
     (fun i ->
        let pos = i lsl 2 in
        let index' = index lsr pos in
        let masked = 0xF land index' in
-       v.(masked)
+       v#.(masked)
     )
 
 let slice (t: (_,_) t) (n:(_ index)) =
-  match t.rank with
-  | 0 -> scalar t.data.(0)
+  match rank t with
+  | 0 -> scalar t#.(0)
   | 1 ->
     if ilen n = 1 then
-      scalar t.data.(n land 0xF)
-    else { rank=1; data = swizzle t.data n }
+      scalar t#.(n land 0xF)
+    else swizzle t n
   | 2 ->
     let dim = mat_dim t in
     let len = ilen n in
     if irank n = 2 then
       if len = 1 then
-        scalar @@ t.data.( dim * ( 0x3 land n) + ((n lsr 2) land 0x3) )
-      else
-        { rank=1; data = Array.init len (fun i ->
-              let s = n lsr (i lsl 3) in
-              t.data.( dim * (0x3 land s) + (((n lsr 2) land 0x3) )))
-        }
+        scalar @@ t#.( dim * ( 0x3 land n) + ((n lsr 2) land 0x3) )
+      else begin
+        A.init len (fun i ->
+            let s = ((n lsr (i lsl 2)) land 0xF) in
+            let i = 0x3 land s in
+            let j = s lsr 2 in
+             t#.( dim * i + j) )
+      end
     else if len = 1 then
-      { rank=1; data= Array.init dim
-                    (fun i -> t.data.( i + dim * (n land 0x3) ))
-      }
+      A.init dim
+        (fun i -> t#.( i + dim * (n land 0x3) ))
     else
-      let data = Array.make (dim * dim) 0. in
+      let data = A.create (mat_len dim) in
+      let pos = ref n in
       for i = 0 to dim - 1 do
-        let s = 0x3 land ( n lsr (i lsl 3) ) in
+        let s = dim * (0x3 land !pos) in
+        let i = i * dim in
         for j = 0 to dim - 1 do
-          data.(i * dim + j) <- t.data.( s * dim + j)
+          A.set data (i + j) @@ t#.( s + j)
         done;
+        pos := !pos lsr 4
       done;
-      { rank=2; data}
+      data
   | n -> unexpected [n]
 
 
-let get (t: (_,_) t) (n:(_ index)) = match t.rank with
-  | 0 -> t.data.(0)
-  | 1 -> t.data.(n land 0x3 )
-  | 2 -> t.data.( (n lsr 2) land 0x3 + mat_dim t * (n land 0x3) )
+let get (t: (_,_) t) (n:(_ index)) = match rank t with
+  | 0 -> t#.(0)
+  | 1 -> t#.(n land 0x3 )
+  | 2 -> t#.( (n lsr 2) land 0x3 + mat_dim t * (n land 0x3) )
   | n -> unexpected [n]
+;;
 
 #if OCAML_MAJOR>=4 && OCAML_MINOR>=6
 let (.%()) x = get x
 let (.%[]) x = slice x
 #endif
 
-let amap2=
-#if OCAML_MAJOR>=4 && OCAML_MINOR>=3
-  Array.map2
-#else
-  fun f x y -> Array.init
-      (min (Array.length x) (Array.length y))
-      (fun i -> f x.(i) y.(i))
-#endif
-let map f x = { x with data = Array.map f x.data }
-let map2 f x y = { x with data = amap2 f x.data y.data }
-let smap f x y = map (f x.data.(0)) y
+let amap2 f x y =
+  A.init
+    (min (A.len x) (A.len y))
+    (fun i -> f x#.(i) y#.(i))
+
+let map f x = A.map f x
+let map2 f x y = amap2 f x y
+let smap f x y = map (f x#.(0)) y
 
 
-let cross {data=a;_} {data=b;_} =
-  if Array.length a = 2 then
-    scalar (a.(0)*.b.(1) -. a.(1) *. b.(0))
+let cross a b =
+  if A.len a = 2 then
+    scalar (a#.(0)*.b#.(1) -. a#.(1) *. b#.(0))
   else
     vec3
-      (a.(1) *. b.(2) -. a.(2) *. b.(1) )
-      (a.(2) *. b.(0) -. a.(0) *. b.(2) )
-      (a.(0) *. b.(1) -. a.(1) *. b.(0) )
+      (a#.(1) *. b#.(2) -. a#.(2) *. b#.(1) )
+      (a#.(2) *. b#.(0) -. a#.(0) *. b#.(2) )
+      (a#.(0) *. b#.(1) -. a#.(1) *. b#.(0) )
 
-let ( ^ ) {data=a;_} {data=b;_} =
-  let dim = Array.length a in
-  let data = Array.make (dim * dim) 0. in
+let ( ^ ) a b =
+  let dim = A.len a in
+  let data = A.create (mat_len dim) in
   for i = 0 to dim -1 do
     for j = 0 to dim - 1 do
-      let r = a.(i) *. b.(j) -. a.(j) *. b.(i) in
-      data.( i * dim + j ) <- r +. data.( i + dim + j);
-      data.( j * dim + i ) <- data.( j + dim + i) -. r
+      let r = a#.(i) *. b#.(j) -. a#.(j) *. b#.(i) in
+      A.set data ( i * dim + j ) @@ r +. data#.( i + dim + j);
+      A.set data ( j * dim + i ) @@ data#.( j + dim + i) -. r
     done
   done;
-  { rank=2; data }
+  data
 
-
-let ( * ) a b = match a.rank, b.rank with
+let ( * ) a b = match rank a, rank b with
   | 0, _ -> smap ( *. ) a b
   | _, 0 -> smap ( *. ) b a
   | 1, 1 -> map2 ( *. ) a b
   | 1, 2 | 2, 1 ->
-    let dim = min (Array.length a.data) (Array.length b.data) in
-    let a , b, s1, s2= if a.rank = 1 then a.data, b.data, dim, 1
-      else b.data, a.data, 1, dim in
+    let dim = min (A.len a) (A.len b) in
+    let a , b, s1, s2= if rank a = 1 then a, b, dim, 1
+      else b, a, 1, dim in
     let sum i = let s = ref 0. and ij = ref (i * s1) in
       for j = 0 to dim -1 do
-        s:= !s +. a.(j) *. b.(!ij);
+        s:= !s +. a#.(j) *. b#.(!ij);
         ij := s2 + !ij done;
       !s
-    in
-    { rank=1; data = Array.init dim sum }
+    in A.init dim sum
   | 2, 2 ->
     let dim = mat_dim a in
-    let a = a.data and b = b.data in
     let sum i j = let s = ref 0. in
       for k = 0 to dim - 1 do
-        s:= a.(i * dim + k) *. b.(k * dim + j) +. !s done;
+        s:= a#.(i * dim + k) *. b#.(k * dim + j) +. !s done;
       !s
     in
-    let data = Array.init (Array.length a)
+    let data = A.init (A.len a)
         (fun n -> sum (n / dim) (n mod dim)) in
-    { rank = 2; data }
+    data
   | x, y  -> unexpected [x;y]
 
 
 let ( / ) a b =
-  match a.rank, b.rank with
+  match rank a, rank b with
   | 1, 1 -> map2 (/.) a b
   | 2, 2 ->
     mat_div a b
@@ -342,28 +407,27 @@ let ( / ) a b =
 
 let ( |*| ) a b =
   let s = ref 0. in
-  for i = 0 to (Array.length a.data - 1) do
-    s:= !s +. a.data.(i) *. b.data.(i)
+  for i = 0 to (A.len a - 1) do
+    s:= !s +. a#.(i) *. b#.(i)
   done;
   !s
 
 let norm x = sqrt (x|*|x)
 
 let (+) a b =
-  if a.rank = 0 then
+  if rank a = 0 then
     smap (+.) a b
-  else if b.rank = 0 then
+  else if rank b = 0 then
     smap (+.) b a
   else map2 (+.) a b
 
 let (-) a b =
-  if a.rank = 0 then
+  if rank a = 0 then
     smap (-.) a b
-  else if b.rank = 0 then
-    { a with
-      data = Array.init (Array.length b.data)
-          (fun n -> b.data.(n) -. a.data.(0))}
+  else if rank b = 0 then
+    A.init (A.len b)
+      (fun n -> b#.(n) -. a#.(0))
   else map2 (-.) a b
 
 
-let floor a = int_of_float ( a.data.(0) )
+let floor a = int_of_float ( a#.(0) )
