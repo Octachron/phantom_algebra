@@ -147,7 +147,8 @@ module type Core = sig
     ('dim,'rank3) t
 
   (** [ x / y] is:
-      - the external product if x or y is a scalar or a matrix
+      - the external product if x or y is a scalar
+      - the matrix division if x and y are a matrix
       - the element-wise division if both x and y are a vector
   *)
   val ( / ) : ('dim, ('rank1, 'rank2, 'rank3, _ ) div) t
