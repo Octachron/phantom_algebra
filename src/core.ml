@@ -73,6 +73,8 @@ module A = struct
     a
 
   let map f x = init (len x) (fun i -> f x#.i)
+  let fold f x a = let res = ref x in
+    for i = 0 to len a do res := f !res a#.i done; !res
 end
 
 
@@ -413,6 +415,11 @@ let ( |*| ) a b =
   !s
 
 let norm x = sqrt (x|*|x)
+
+let norm_1 = A.fold (fun acc x -> acc +. abs_float x ) 0.
+let norm_q q a =
+  (A.fold (fun acc x -> acc +. (abs_float x) ** q ) 0. a) ** (1./.q)
+
 
 let (+) a b =
   if rank a = 0 then
