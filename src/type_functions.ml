@@ -32,7 +32,9 @@ type ('a, 'b,'c, 'parameters) div =
             [< `zero of 'c & 'p1 one
             | `one of 'c & 'p1 one]
   | `two of 'b &
-            [< `zero of 'c & 'p1 two]
+            [< `zero of 'c & 'p1 two
+            | `two of 'c & 'p2 two
+            ]
   ] as 'a
   constraint 'parameters = 'p1 * 'p2 * 'p3
 (** (x,y,z,_ ) div computes the rank of x * y and
@@ -140,4 +142,4 @@ type ('tensor_rank,'index_rank,'res_rank,'dim,'res_dim, 'len, 'parameters)
               | `four of 'res_rank * 'res_dim & 'p one * 's four
               ]
         ] as 'tensor_rank
-constraint 'parameters = 'p * 's
+      constraint 'parameters = 'p * 's

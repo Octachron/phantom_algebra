@@ -69,8 +69,83 @@ let pp ppf a = match a.rank with
     Format.fprintf ppf "@]"
   | n -> unexpected [n]
 
-
-
+(* ( A / B) B = A *)
+let mat_div x y =
+  let dim = mat_dim x in
+  let left = Array.copy y.data and right = Array.copy x.data in
+  let perm = Array.init dim (fun n -> n) in
+(*  let (#.) a (i,j) = a.( i * dim + perm.(j) ) in
+  let set (//) a (i,j)  y =
+    let pos = i * dim + perm.(j) in
+    a.(pos)<- a.(pos) // y in
+    let (#+) = set (+.) and (#/) = set ( /. )in*)
+  let switch i j =
+    let tmp = perm.(i) in
+    perm.(i) <- perm.(j); perm.(j) <- tmp; in
+  let pivot start =
+    let pos = start * dim in
+    let mx = ref (abs_float left.(pos + perm.(start) ) )
+    and i = ref start in
+    for j = start + 1 to dim -1 do
+      let m = abs_float left.(pos + perm.(j)) in
+      if m > !mx then
+        (mx := m; i:=j)
+    done;
+    if start <> !i then switch start !i in
+  let col_transf coeff k l =
+    let k' = perm.(k) and l' = perm.(l) in
+    for i = k to dim-1 do
+      let i = dim * i in
+      let il = i + l' and ik = i + k' in
+      left.(il) <- left.(il) +.  coeff *. left.(ik);
+      right.(il) <- right.(il) +.  coeff *. right.(ik);
+    done;
+    for i = 0 to k-1 do
+      let i = dim * i in
+      let il = i + l' and ik = i + k' in
+      right.(il) <- right.(il) +.  coeff *. right.(ik);
+    done;
+  in
+  (* zero upper *)
+  for i = 0 to dim - 1 do
+    let i' = dim * i in
+    pivot i;
+    let x = left.(i' + perm.(i)) in
+    if x <> 0. then
+      for  j = i + 1 to dim - 1 do
+        let coeff = -. left.(i' + perm.(j)) /. x in
+        if coeff <> 0. then
+          col_transf coeff i j
+      done
+  done;
+  (* zero lower *)
+  for i = dim-1 downto 0 do
+    let i' = dim * i in
+    let x = left.(i' + perm.(i)) in
+    if x <> 0. then
+      for j = 0 to i-1 do
+      let coeff = -. left.(i' + perm.(j)) /. x in
+      col_transf coeff i j
+    done
+  done;
+  for i = 0 to dim - 1 do
+    for j = 0 to dim - 1 do
+      let j' = perm.(j) in
+      let ij = i * dim + j' in
+      let x = left.(j * dim + j') in
+      if x <> 0. then
+        right.(ij) <- right.(ij) /. x
+      done;
+  done;
+  let data = left in
+  for j = 0 to dim -1 do
+    let j' = perm.(j) in
+    for i = 0 to dim - 1 do
+      let i = dim * i in
+      data.(i + j) <- right.(i + j');
+    done
+  done;
+  { rank=2; data}
 
 type +'x scalar = ('a, 'b z) t constraint 'x = 'a * 'b
 
@@ -259,10 +334,11 @@ let ( * ) a b = match a.rank, b.rank with
 
 
 let ( / ) a b =
-  if a.rank = 1 && b.rank = 1 then
-  map2 (/.) a b
- else
-  smap (fun x y -> y /. x ) b a
+  match a.rank, b.rank with
+  | 1, 1 -> map2 (/.) a b
+  | 2, 2 ->
+    mat_div a b
+  | _ -> smap (fun x y -> y /. x ) b a
 
 let ( |*| ) a b =
   let s = ref 0. in
