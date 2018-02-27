@@ -108,6 +108,25 @@ let mat_dim a = match A.len a with
   | 16 -> 4
   | n -> int_of_float (sqrt (float_of_int n))
 
+
+let mat_len = function
+  | 2 -> 5
+  | 3 -> 9
+  | 4 -> 16
+  | _ -> assert false
+
+
+let mat_init dim f =
+  let a = A.create (mat_len dim) in
+  let pos = ref 0 in
+  for i = 0 to dim -1 do
+    for j = 0 to dim -1 do
+      A.set a !pos (f i j);
+      incr pos
+    done;
+  done;
+  a
+
 let pp ppf a = match rank a with
   | 0 -> Format.pp_print_float ppf a#.0
   | 1 ->
@@ -276,11 +295,6 @@ let mat4 a b c d = A.from_array
   |]
 
 
-let mat_len = function
-  | 2 -> 5
-  | 3 -> 9
-  | 4 -> 16
-  | _ -> assert false
 
 let swizzle v index =
   let size = ilen index in
@@ -336,11 +350,6 @@ let get (t: (_,_) t) (n:(_ index)) = match rank t with
   | 2 -> t#.( (n lsr 2) land 0x3 + mat_dim t * (n land 0x3) )
   | n -> unexpected [n]
 ;;
-
-#if OCAML_MAJOR>=4 && OCAML_MINOR>=6
-let (.%()) x = get x
-let (.%[]) x = slice x
-#endif
 
 let amap2 f x y =
   A.init
@@ -407,6 +416,23 @@ let ( / ) a b =
     mat_div a b
   | _ -> smap (fun x y -> y /. x ) b a
 
+let dirac i j = if i=j then 1. else 0.
+
+let eye dim =
+  mat_init dim dirac
+
+let id rank dim = match rank with
+  | 0 -> scalar 1.
+  | 1 -> vec_stretch dim (scalar 1.)
+  | 2 -> eye dim
+  | _ -> assert false
+
+let inv a =
+  match rank a with
+  | 0 | 1 ->  A.map (fun x -> 1. /. x ) a
+  | 2 -> mat_div (eye @@ dim a) a
+  | _ -> assert false
+
 let ( |*| ) a b =
   let s = ref 0. in
   for i = 0 to (A.len a - 1) do
@@ -414,11 +440,30 @@ let ( |*| ) a b =
   done;
   !s
 
+let rec pow k x =
+  match k with
+  | 0 -> id (rank x) (dim x)
+  | 1 -> x
+  | 2 -> x * x
+  | k ->
+    if k mod 2 = 1 then
+      x * pow (k lsr 1) (x*x)
+    else
+      pow (k lsr 1) (x*x)
+
+let pow k x = if k < 0 then
+    pow (-k) (inv x)
+  else
+    pow k x
+
+let ( **. ) = ( ** )
+let ( ** ) x k = pow k x
+
 let norm x = sqrt (x|*|x)
 
 let norm_1 = A.fold (fun acc x -> acc +. abs_float x ) 0.
 let norm_q q a =
-  (A.fold (fun acc x -> acc +. (abs_float x) ** q ) 0. a) ** (1./.q)
+  (A.fold (fun acc x -> acc +. (abs_float x) **. q ) 0. a) **. (1./.q)
 
 
 let (+) a b =
@@ -438,3 +483,8 @@ let (-) a b =
 
 
 let floor a = int_of_float ( a#.(0) )
+;;
+#if OCAML_MAJOR>=4 && OCAML_MINOR>=6
+let (.%()) x = get x
+let (.%[]) x = slice x
+#endif

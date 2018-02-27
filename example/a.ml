@@ -53,6 +53,10 @@ let sym = mat2 (vec2 0. 1.) (vec2 1. 0.)
 
 let t = mat2 (vec2 1. 2.) (vec2 3. 4.) * sym |? "test"
 let sym = eye / sym |? "1/sym"
+
+let mid = ( xyrot (pi/. 24.) ** 24 ) |? "R_(π/24) ** 24 = -xy "
+let mid = ( xyrot (pi/. 7.) ** (-7) ) |? "R_(π/7) ** -7 = -xy"
+
 ;;
 
 module Random = struct

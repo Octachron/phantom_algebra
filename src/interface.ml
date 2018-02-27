@@ -155,6 +155,9 @@ module type Core = sig
     -> ('dim, 'rank2) t ->
     ('dim,'rank3) t
 
+  (** [ t ** k] is [ t * … * t ] k-time *)
+  val ( ** ) : ('dim,'rank) t -> int -> ('dim,'rank) t
+
   (** [ (x|*|y)] is the canonical scalar product
   *)
   val ( |*| ) : ('dim, 'rank) t -> ('dim,'rank) t -> k
