@@ -8,14 +8,6 @@
 ))
 
 
-
-(executable (
-            (name bug)
-            (modules (Bug))
-            (libraries (phantom_algebra))
-))
-
-
 (alias
  ((name    runtest)
   (deps    (a.exe))

@@ -154,11 +154,6 @@ let mat_div x y =
   let dim = mat_dim x in
   let left = A.copy y and right = A.copy x in
   let perm = Array.init dim (fun n -> n) in
-(*  let (#.) a (i,j) = a.( i * dim + perm.(j) ) in
-  let set (//) a (i,j)  y =
-    let pos = i * dim + perm.(j) in
-    a.(pos)<- a.(pos) // y in
-    let (#+) = set (+.) and (#/) = set ( /. )in*)
   let switch i j =
     let tmp = perm.(i) in
     perm.(i) <- perm.(j); perm.(j) <- tmp; in
