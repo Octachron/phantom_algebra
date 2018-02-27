@@ -251,10 +251,29 @@ let ( |+| ) a b =
   data
 
 
-let scalar x = A.from_array [|x|]
-let vec2 x y = A.from_array [|x;y|]
-let vec3 x y z = A.from_array [|x;y;z|]
-let vec4 x y z t = A.from_array [|x;y;z;t|]
+let scalar x =
+  let a = A.create 1 in
+  A.set a 0 x;
+  a
+let vec2 x y =
+  let a = A.create 2 in
+  A.set a 0 x;
+  A.set a 1 y;
+  a
+let vec3 x y z =
+  let a = A.create 3 in
+  A.set a 0 x;
+  A.set a 1 y;
+  A.set a 2 z;
+  a
+
+let vec4 x y z t =
+  let a = A.create 4 in
+  A.set a 0 x;
+  A.set a 1 x;
+  A.set a 2 y;
+  A.set a 3 t;
+  a
 
 let vec2' a =
   if rank a = 0 then
@@ -278,22 +297,27 @@ let vec_stretch k a =
 let vec3' x = vec_stretch 3 x
 let vec4' x = vec_stretch 4 x
 
+let mat2 a b =
+  let m = A.create (mat_len 2) in
+  A.set m 0 a#.0; A.set m 1 a#.1;
+  A.set m 2 b#.0; A.set m 3 b#.1;
+  m
 
 
-let mat2 a b = A.from_array
-  [| a#.(0); a#.(1); b#.(0); b#.(1); 0. (* padding *) |]
-let mat3 a b c = A.from_array
-  [| a#.(0); a#.(1); a#.(2);
-     b#.(0); b#.(1); b#.(2);
-     c#.(0); c#.(1); c#.(2) |]
+let mat3 a b c =
+  let m = A.create (mat_len 3) in
+  A.set m 0 a#.0; A.set m 1 a#.1; A.set m 2 a#.2;
+  A.set m 3 b#.0; A.set m 4 b#.1; A.set m 5 b#.2;
+  A.set m 6 c#.0; A.set m 7 c#.1; A.set m 8 c#.2;
+  m
 
-let mat4 a b c d = A.from_array
-  [| a#.(0); a#.(1); a#.(2); a#.(3);
-     b#.(0); b#.(1); b#.(2); b#.(3);
-     c#.(0); c#.(1); c#.(2); c#.(3);
-     d#.(0); d#.(1); d#.(2); d#.(3);
-  |]
-
+let mat4 a b c d =
+  let m = A.create (mat_len 4) in
+  A.set m  0 a#.0; A.set m  1 a#.1; A.set m  2 a#.2; A.set m  3 a#.3;
+  A.set m  4 b#.0; A.set m  5 b#.1; A.set m  6 b#.2; A.set m  7 b#.3;
+  A.set m  8 c#.0; A.set m  9 c#.1; A.set m 10 c#.2; A.set m 11 c#.3;
+  A.set m 12 d#.0; A.set m 13 d#.1; A.set m 14 d#.2; A.set m 15 d#.3;
+  m
 
 
 let swizzle v index =
