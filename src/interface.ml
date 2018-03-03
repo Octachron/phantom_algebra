@@ -1,14 +1,13 @@
+(** Phantom algebra interfaces *)
+
 open Type_functions
 type k = float
 exception Unexpected_ranks of int list
 
-(** { 1 Helper type definitions}
-    Skim through this section when reading the documentation
-    for first (second, third and …) time
-*)
 
 
 module type Dim = sig
+  (** Dimension-related types *)
 
   type _ dim =
     | D2 : _ two dim
@@ -19,8 +18,8 @@ module type Dim = sig
 end
 
 
-(** { 1 Index data type } *)
 module type Index = sig
+(** Index data type *)
 
   type (+'dim,+'len,+'rank,+'group) index
 
@@ -222,6 +221,7 @@ module type Indexing = sig
   val (.%[]): ('dim1,('rank1,'rank2,'rank3, 'dim1,'dim3,'len,_) superindexing) t
     -> ('dim1, 'len, 'rank2, 'group) index -> ('dim3,'rank3) t
 #endif
+
   (** [t.%(x)] returns the value of the tensor at index [x] *)
   val get: ('dim,'rank) t -> ('dim,_ one, 'rank, 'group) index -> k
 

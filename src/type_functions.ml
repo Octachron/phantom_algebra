@@ -1,3 +1,9 @@
+(** Type-level functions
+
+    Skim through this section when reading the documentation
+    for the first (second, third and …) time
+*)
+
 type 'a one = [`one of 'a]
 type 'a z = [`zero of 'a]
 type 'a two = [`two of 'a]
