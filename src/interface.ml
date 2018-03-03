@@ -23,10 +23,11 @@ module type Dim = sig
   (** Dimension-related types *)
 
   (** Dimension for vectors and matrix, 1d vectors are considered scalars *)
-  type _ dim =
-    | D2 : _ two dim
-    | D3: _ three dim
-    | D4: _ four dim
+  type _ dim
+
+  val d2: _ two dim
+  val d3: _ three dim
+  val d4: _ four dim
 
   val dim_to_int: _ dim -> int
 end

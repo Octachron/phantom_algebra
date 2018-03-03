@@ -47,7 +47,7 @@ let v4 = scalar 0. |+| vec2 1. 2. |+| scalar 3. |? "v4=(0 | 1 2 | 3)"
 let v4' = vec2 1. 2. |+| vec2 3. 4. |? "(1 2 | 3 4)"
 
 let stretch = vec4' (vec2 3. 2. |+| scalar 1.) |? "vec4'( 3 2 | 1) = (3 2 1 1)"
-let eye = eye D2 |? "eye"
+let eye = eye d2 |? "eye"
 
 let d1 = mat2 (vec2 2. 0.) (vec2 0. 1.) |? "d1= diag (2 1)"
 let d2 = mat2 (vec2 1. 0.) (vec2 0. 2.) |? "d2= diag(1 2)"

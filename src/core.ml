@@ -1,9 +1,13 @@
 open Type_functions
 
 type _ dim =
-  | D2 : _ two dim
-  | D3: _ three dim
-  | D4: _ four dim
+  | D2
+  | D3
+  | D4
+
+let d2 = D2
+let d3 = D3
+let d4 = D4
 
 let dim_to_int: type a. a dim -> int = function
   | D2 -> 2
