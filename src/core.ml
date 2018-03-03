@@ -14,10 +14,17 @@ let unexpected ranks = raise (Interface.Unexpected_ranks ranks)
 
 type (+'input_dim,+'output_dim,+'rank,+'group) index = int
 
+type rank = Scalar | Vector | Matrix
+
+let rank_from_int = function
+  | 0 -> Scalar
+  | 1 -> Vector
+  | 2 -> Matrix
+  | _ -> assert false
 
 let ilen x = 0x3F land (x lsr 18)
 let shift x = 0xFF land (x lsr 16)
-let irank x = x lsr 24
+let irank x = rank_from_int (x lsr 24)
 let t3 x = x, x, x
 let x', r', s' = t3 0x1040000
 let y', g', t' = t3 0x1040001
@@ -99,15 +106,15 @@ let dim a = match A.len a with
   | 16 -> 4
   | _ -> assert false
 
+
 let rank a = match A.len a with
-  | 0 -> 0
-  | 1 -> 0
-  | 2 -> 1
-  | 3 -> 1
-  | 4 -> 1
-  | 5 -> 2
-  | 9 -> 2
-  | 16 -> 2
+  | 1 -> Scalar
+  | 2 -> Vector
+  | 3 -> Vector
+  | 4 -> Vector
+  | 5 -> Matrix
+  | 9 -> Matrix
+  | 16 -> Matrix
   | _ -> assert false
 
 let (#.) = A.(#.)
@@ -138,14 +145,14 @@ let mat_init dim f =
   a
 
 let pp ppf a = match rank a with
-  | 0 -> Format.pp_print_float ppf a#.0
-  | 1 ->
+  | Scalar -> Format.pp_print_float ppf a#.0
+  | Vector ->
     Format.fprintf ppf "@[(%g" a#.0;
     for i=1 to (A.len a -1) do
       Format.fprintf ppf "@ %g" a#.i
     done;
     Format.fprintf ppf ")@]"
-  | 2 ->
+  | Matrix ->
     let dim = mat_dim a in
     let line i =
       Format.fprintf ppf "@[|% g" a#.(dim * i);
@@ -157,7 +164,6 @@ let pp ppf a = match rank a with
       line 0;
       for i = 1 to dim - 1 do Format.pp_print_cut ppf (); line i done;
     Format.fprintf ppf "@]"
-  | n -> unexpected [n]
 
 (* ( A / B) B = A *)
 let mat_div x y =
@@ -281,13 +287,13 @@ let vec4 x y z t =
   a
 
 let vec2' a =
-  if rank a = 0 then
+  if rank a = Scalar then
     A.make 2 a#.0
   else
     A.copy a
 
 let vec_stretch k a =
-  if rank a = 0 then
+  if rank a = Scalar then
     A.make 2 a#.(0)
   else
     let data = A.create k in
@@ -337,15 +343,15 @@ let swizzle v index =
 
 let slice (t: (_,_) t) (n:(_ index)) =
   match rank t with
-  | 0 -> scalar t#.(0)
-  | 1 ->
+  | Scalar -> scalar t#.(0)
+  | Vector ->
     if ilen n = 1 then
       scalar t#.(n land 0xF)
     else swizzle t n
-  | 2 ->
+  | Matrix ->
     let dim = mat_dim t in
     let len = ilen n in
-    if irank n = 2 then
+    if irank n = Matrix then
       if len = 1 then
         scalar @@ t#.( dim * ( 0x3 land n) + ((n lsr 2) land 0x3) )
       else begin
@@ -370,14 +376,12 @@ let slice (t: (_,_) t) (n:(_ index)) =
         pos := !pos lsr 4
       done;
       data
-  | n -> unexpected [n]
 
 
 let get (t: (_,_) t) (n:(_ index)) = match rank t with
-  | 0 -> t#.(0)
-  | 1 -> t#.(n land 0x3 )
-  | 2 -> t#.( (n lsr 2) land 0x3 + mat_dim t * (n land 0x3) )
-  | n -> unexpected [n]
+  | Scalar -> t#.(0)
+  | Vector -> t#.(n land 0x3 )
+  | Matrix -> t#.( (n lsr 2) land 0x3 + mat_dim t * (n land 0x3) )
 ;;
 
 let amap2 f x y =
@@ -414,12 +418,12 @@ let ( ^ ) a b =
 let ( *% ) x = map ( ( *. ) x )
 
 let ( * ) a b = match rank a, rank b with
-  | 0, _ -> smap ( *. ) a b
-  | _, 0 -> smap ( *. ) b a
-  | 1, 1 -> map2 ( *. ) a b
-  | 1, 2 | 2, 1 ->
+  | Scalar, _ -> smap ( *. ) a b
+  | _, Scalar -> smap ( *. ) b a
+  | Vector, Vector -> map2 ( *. ) a b
+  | Vector, Matrix | Matrix, Vector ->
     let dim = min (A.len a) (A.len b) in
-    let a , b, s1, s2= if rank a = 1 then a, b, dim, 1
+    let a , b, s1, s2= if rank a = Vector then a, b, dim, 1
       else b, a, 1, dim in
     let sum i = let s = ref 0. and ij = ref (i * s1) in
       for j = 0 to dim -1 do
@@ -427,7 +431,7 @@ let ( * ) a b = match rank a, rank b with
         ij := s2 + !ij done;
       !s
     in A.init dim sum
-  | 2, 2 ->
+  | Matrix, Matrix ->
     let dim = mat_dim a in
     let sum i j = let s = ref 0. in
       for k = 0 to dim - 1 do
@@ -437,13 +441,12 @@ let ( * ) a b = match rank a, rank b with
     let data = A.init (A.len a)
         (fun n -> sum (n / dim) (n mod dim)) in
     data
-  | x, y  -> unexpected [x;y]
 
 
 let ( / ) a b =
   match rank a, rank b with
-  | 1, 1 -> map2 (/.) a b
-  | 2, 2 ->
+  | Vector, Vector -> map2 (/.) a b
+  | Matrix, Matrix ->
     mat_div a b
   | _ -> smap (fun x y -> y /. x ) b a
 
@@ -453,16 +456,14 @@ let eye dim =
   mat_init dim dirac
 
 let id rank dim = match rank with
-  | 0 -> scalar 1.
-  | 1 -> vec_stretch dim (scalar 1.)
-  | 2 -> eye dim
-  | _ -> assert false
+  | Scalar -> scalar 1.
+  | Vector -> vec_stretch dim (scalar 1.)
+  | Matrix -> eye dim
 
 let inv a =
   match rank a with
-  | 0 | 1 ->  A.map (fun x -> 1. /. x ) a
-  | 2 -> mat_div (eye @@ dim a) a
-  | _ -> assert false
+  | Scalar | Vector ->  A.map (fun x -> 1. /. x ) a
+  | Matrix -> mat_div (eye @@ dim a) a
 
 let ( |*| ) a b =
   let s = ref 0. in
@@ -523,16 +524,16 @@ let pade_13= [|
 
 
 let (+) a b =
-  if rank a = 0 then
+  if rank a = Scalar then
     smap (+.) a b
-  else if rank b = 0 then
+  else if rank b = Scalar then
     smap (+.) b a
   else map2 (+.) a b
 
 let (-) a b =
-  if rank a = 0 then
+  if rank a = Scalar then
     smap (-.) a b
-  else if rank b = 0 then
+  else if rank b = Scalar then
     A.init (A.len b)
       (fun n -> b#.(n) -. a#.(0))
   else map2 (-.) a b
@@ -557,9 +558,8 @@ let expm a =
   pow_2_k  (-s) ( (u + v) / (v - u) )
 
 let exp m = match rank m with
-  | 0 | 1 -> map exp m
-  | 2 -> expm m
-  | _ -> assert false
+  | Scalar | Vector -> map exp m
+  | Matrix -> expm m
 
 let floor a = int_of_float ( a#.(0) )
 
