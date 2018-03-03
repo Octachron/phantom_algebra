@@ -9,6 +9,7 @@ exception Unexpected_ranks of int list
 module type Dim = sig
   (** Dimension-related types *)
 
+  (** Dimension for vectors and matrix, 1d vectors are considered scalars *)
   type _ dim =
     | D2 : _ two dim
     | D3: _ three dim
@@ -22,6 +23,31 @@ module type Index = sig
 (** Index data type *)
 
   type (+'dim,+'len,+'rank,+'group) index
+(**  An index of type [(+'dim,'+len,+'rank,'group) index]
+     can be used to index a tensor, each type parameter informs
+     on which kind of tensor can be used (['dim] and ['rank]),
+     on the type of the resulting vector (['len] and ['rank]),
+     or on with which indices it can be combined when swizzling.
+     More precisely,
+     - [`dim] is the list of tensor dimension compatible with the index,
+     for instance `x` works for all dimension, whereas `w` is only meaningful
+     for a 4-vector.
+     - [`rank] is the number of coordinate specified by the index, a tensor
+     can be indexed only if its own rank is equal or superior to the index rank.
+     For instance, [xx] is a rank 2 tensor and can only index matrices, whereas
+     [x] is a valid index for both vector and tensor.
+     When slicing, the rank of the slice will be the difference between the
+     tensor rank and the index rank. For a vector [v] and a matrix [m],
+     v.%[x] is a scalar ([1 - 1 = 0]) like [m.%[xx]] ( [ 2 - 2 = 0]) but
+     m.%[x] is a vector ([2-1=0]) corresponding to the first row of the matrix
+     - ['len] is the number of indices combined in the aggregated index by
+     swizzling, if ['len > 1] it increases the rank of the resulting tensor
+     by one and sets its dimension to ['len]. See the slice function for
+     more information.
+     - ['group] corresponds to the index namespace, only index of the
+     same namespace can be combined by swizzling. Availaibles namespace
+     are [`xyzx],[`rgba] and [`stpq].
+ *)
 
 
   (** Index concatenation *)
