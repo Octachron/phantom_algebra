@@ -408,7 +408,7 @@ let ( ^ ) a b =
   let data = A.create (mat_len dim) in
   for i = 0 to dim -1 do
     for j = 0 to dim - 1 do
-      let r = a#.(i) *. b#.(j) -. a#.(j) *. b#.(i) in
+      let r =  a#.(j) *. b#.(i) -. a#.(i) *. b#.(j) in
       A.set data ( i * dim + j ) @@ r +. data#.( i + dim + j);
       A.set data ( j * dim + i ) @@ data#.( j + dim + i) -. r
     done
@@ -539,6 +539,41 @@ let (-) a b =
   else map2 (-.) a b
 
 
+let normalize x =
+  let n = norm x in
+  if n = 0. then failwith "Null vector cannot be normalized"
+  else
+      x / (scalar (norm x))
+let orthonormalize vs =
+  let normalize_next rs vs x =
+    let x = List.fold_left (fun x b -> x - (b|*|x) *% b ) x vs in
+    let n = norm x in
+    if n > 0. then x / (scalar n) :: rs else rs in
+  let normalize_next x = normalize_next x x in
+  List.fold_left normalize_next [] vs
+
+let row_map f m =
+  match dim m with
+  | 2 -> mat2 (f (slice m x')) (f (slice m y'))
+  | 3 -> mat3 (f (slice m x')) (f (slice m y')) (f (slice m z'))
+  | 4 ->
+    mat4 (f (slice m x')) (f (slice m y')) (f (slice m z')) (f (slice m w'))
+  | _ -> assert false
+
+let rotation x y theta =
+  let theta = ~-.theta (* use R(θ)^T = R(-θ) to avoid a transposition *)in
+  match orthonormalize [x;y] with
+  | [] | [_] | _ :: _ :: _  :: _ ->
+    failwith "rotation: non-orthogonal vector does not define a rotation plane"
+  | [y;x] ->
+    let cosm1 = cos theta -. 1. and sin = sin theta in
+    let f v =
+      let vx = (x|*|v) and vy = (y|*|v) in
+      ( cosm1 *. vx -. sin *. vy) *% x
+      + ( sin *. vx +. cosm1 *. vy) *% y
+      + v
+    in
+    row_map f (eye (dim x))
 
 (* Higham, 2005 *)
 let expm a =

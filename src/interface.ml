@@ -262,6 +262,19 @@ module type Builtin = sig
   type (+'a,+'b) tensor
   val eye: 'a dim -> ('a, _ two) tensor
   val zero: 'a dim -> ('a, _ one) tensor
+
+  (** [normalize x] is [x / scalar (norm x)] *)
+  val normalize: ('dim,'rank) tensor -> ('dim,'rank) tensor
+
+  (** [orthonormalize [x_1;…;x_n] returns an orthonormal base [b_1;…;b_k]
+      of the vector space spanned by [x_1,…x_n].
+      In general [k ≤ n], and [k=n] iff the family [x_1,…,x_n] was free *)
+  val orthonormalize: ('dim,'rank) tensor list -> ('dim,'rank) tensor list
+
+  (** [rotation x y θ] computes the rotation matrix in the plane
+      spanned by x y with a θ angle. *)
+  val rotation: ('dim,_ one) tensor -> ('dim,_ one) tensor -> k
+    -> ('dim,_ two) tensor
 end
 
 module type S = sig

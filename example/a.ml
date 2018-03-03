@@ -22,14 +22,14 @@ let v'' = s * v  |? "s * v = (0 7)"
 let v''' = v' * ( scalar 1. + v'') |? "v' * ( 1 + v'') = (7, 64)"
 
 let xyrot theta = mat3
-    (vec3 (cos theta) (sin theta) 0.)
-    (vec3 (~-.(sin theta)) (cos theta) 0.)
+    (vec3 (cos theta) (~-.(sin theta)) 0.)
+    (vec3 (sin theta) (cos theta) 0.)
     (vec3 0. 0. 1.)
 
 
 let pi = 4. *. atan 1.
 let r = xyrot (pi /.6.) |? "Rxy_(π/6)"
-
+let r' = rotation (vec3 1. 0. 0.) (vec3 0. 1. 0.) (pi /. 6.) |? "Rxy_(π/6)"
 
 
 let e1 = vec3 1. 0. 0. |? "e1=(1 0 0)"
