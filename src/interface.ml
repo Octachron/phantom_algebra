@@ -6,6 +6,19 @@ exception Unexpected_ranks of int list
 
 
 
+module type Rank = sig
+  (** Rank-related types *)
+
+  (** Tensor rank: scalar, vector or matrix *)
+  type _ rank
+  val scalar: _ z rank
+  val vector: _ one rank
+  val matrix: _ two rank
+  val rank_to_int: _ rank -> int
+end
+
+
+
 module type Dim = sig
   (** Dimension-related types *)
 
@@ -195,6 +208,7 @@ module type Core = sig
   (** [exp m = 1 + m + m ** 2 / 2 + m **3 / 3! … ] *)
   val exp: ('dim,'rank) t -> ('dim,'rank) t
 
+
   (** [ t ** k] is [ t * … * t ] k-time *)
   val ( ** ) : ('dim,'rank) t -> int -> ('dim,'rank) t
 
@@ -259,9 +273,19 @@ end
 module type Builtin = sig
 
   type 'a dim
+  type 'a rank
   type (+'a,+'b) tensor
-  val eye: 'a dim -> ('a, _ two) tensor
-  val zero: 'a dim -> ('a, _ one) tensor
+
+  val zero: 'dim dim -> 'rank rank -> ('dim, 'rank) tensor
+
+  (** [id rank dim] [t ** 0] for any tensor of corresponding rank
+      and dimension *)
+  val id:  'dim dim -> 'rank rank -> ('dim,'rank) tensor
+
+  (** [eye dim] is [id matrix dim], the identity matrix with ones
+      on the diagonals *)
+    val eye: 'a dim -> ('a, _ two) tensor
+
 
   (** [normalize x] is [x / scalar (norm x)] *)
   val normalize: ('dim,'rank) tensor -> ('dim,'rank) tensor
@@ -278,13 +302,14 @@ module type Builtin = sig
 end
 
 module type S = sig
+  include Dim
+  include Rank
   include Core
   include Index
-  include Dim
   include Indexing with
     type ('a,'b,'c,'d) index := ('a,'b,'c,'d) index
     and type ('a,'b) t := ('a,'b) t
   include Builtin with
-    type 'a dim := 'a dim
+    type 'a dim := 'a dim and type 'a rank := 'a rank
     and type ('a,'b) tensor := ('a,'b) t
 end

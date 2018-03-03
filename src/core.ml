@@ -14,13 +14,22 @@ let unexpected ranks = raise (Interface.Unexpected_ranks ranks)
 
 type (+'input_dim,+'output_dim,+'rank,+'group) index = int
 
-type rank = Scalar | Vector | Matrix
+type _ rank = Scalar | Vector | Matrix
 
+let scalar=Scalar
+let vector=Vector
+let matrix=Matrix
 let rank_from_int = function
   | 0 -> Scalar
   | 1 -> Vector
   | 2 -> Matrix
   | _ -> assert false
+
+let rank_to_int = function
+  | Scalar -> 0
+  | Vector -> 1
+  | Matrix -> 2
+
 
 let ilen x = 0x3F land (x lsr 18)
 let shift x = 0xFF land (x lsr 16)
@@ -455,9 +464,9 @@ let dirac i j = if i=j then 1. else 0.
 let eye dim =
   mat_init dim dirac
 
-let id rank dim = match rank with
+let id dim rank = match rank with
   | Scalar -> scalar 1.
-  | Vector -> vec_stretch dim (scalar 1.)
+  | Vector -> A.make dim 1.
   | Matrix -> eye dim
 
 let inv a =
@@ -474,7 +483,7 @@ let ( |*| ) a b =
 
 let rec pow k x =
   match k with
-  | 0 -> id (rank x) (dim x)
+  | 0 -> id (dim x) (rank x)
   | 1 -> x
   | 2 -> x * x
   | k ->
@@ -600,7 +609,12 @@ let floor a = int_of_float ( a#.(0) )
 
 let eye dim = eye (dim_to_int dim)
 
-let zero (type a) (d: a dim) = vec_stretch (dim_to_int d) (scalar 0.)
+let zero (type a) (d: a dim) r = match r with
+  | Scalar -> A.make 1 0.
+  | Vector -> A.make (dim_to_int d) 0.
+  | Matrix -> A.make (mat_len @@ dim_to_int d) 0.
+
+let id d = id (dim_to_int d)
 
 ;;
 #if OCAML_MAJOR>=4 && OCAML_MINOR>=6
