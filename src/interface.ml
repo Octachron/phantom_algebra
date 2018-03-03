@@ -7,6 +7,19 @@ exception Unexpected_ranks of int list
     for first (second, third and …) time
 *)
 
+
+module type Dim = sig
+
+  type _ dim =
+    | D1 : _ one dim
+    | D2 : _ two dim
+    | D3: _ three dim
+    | D4: _ four dim
+
+  val dim_to_int: _ dim -> int
+end
+
+
 (** { 1 Index data type } *)
 module type Index = sig
 
@@ -215,14 +228,24 @@ module type Indexing = sig
 
 #if OCAML_MAJOR>=4 && OCAML_MINOR>=6
   val (.%()): ('dim,'rank) t -> ('dim, _ one,'rank,'group) index -> k
-#endif
+  #endif
+end
+
+module type Builtin = sig
+
+  type 'a dim
+  type (+'a,+'b) tensor
+  val eye: 'a dim -> ('a, _ two) tensor
 end
 
 module type S = sig
   include Core
   include Index
+  include Dim
   include Indexing with
     type ('a,'b,'c,'d) index := ('a,'b,'c,'d) index
     and type ('a,'b) t := ('a,'b) t
-
+  include Builtin with
+    type 'a dim := 'a dim
+    and type ('a,'b) tensor := ('a,'b) t
 end
