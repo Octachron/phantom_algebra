@@ -11,7 +11,6 @@ exception Unexpected_ranks of int list
 module type Dim = sig
 
   type _ dim =
-    | D1 : _ one dim
     | D2 : _ two dim
     | D3: _ three dim
     | D4: _ four dim
@@ -236,6 +235,7 @@ module type Builtin = sig
   type 'a dim
   type (+'a,+'b) tensor
   val eye: 'a dim -> ('a, _ two) tensor
+  val zero: 'a dim -> ('a, _ one) tensor
 end
 
 module type S = sig

@@ -1,13 +1,11 @@
 open Type_functions
 
 type _ dim =
-  | D1 : _ one dim
   | D2 : _ two dim
   | D3: _ three dim
   | D4: _ four dim
 
 let dim_to_int: type a. a dim -> int = function
-  | D1 -> 1
   | D2 -> 2
   | D3 -> 3
   | D4 -> 4
@@ -566,6 +564,8 @@ let exp m = match rank m with
 let floor a = int_of_float ( a#.(0) )
 
 let eye dim = eye (dim_to_int dim)
+
+let zero (type a) (d: a dim) = vec_stretch (dim_to_int d) (scalar 0.)
 
 ;;
 #if OCAML_MAJOR>=4 && OCAML_MINOR>=6
