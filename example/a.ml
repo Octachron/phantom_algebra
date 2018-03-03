@@ -30,8 +30,13 @@ let xyrot theta = mat3
 let pi = 4. *. atan 1.
 let r = xyrot (pi /.6.) |? "Rxy_(π/6)"
 
+
+
 let e1 = vec3 1. 0. 0. |? "e1=(1 0 0)"
 let e2 = xyrot (pi /. 2.) * e1 |? "R_(π/2) e1 = (0 1 0)"
+
+let r = exp ( scalar (pi /. 6.) * e1 ^ e2 ) |? "exp (π/6 (dx ^ dy)) = Rxy_(π/6)"
+
 
 let e3 = cross e1 e2 |? "*(e1 ^ e2) = e3"
 let f2 = e1 ^ e2 |? "dx ^ dy"
@@ -48,6 +53,7 @@ let d1 = mat2 (vec2 2. 0.) (vec2 0. 1.) |? "d1= diag (2 1)"
 let d2 = mat2 (vec2 1. 0.) (vec2 0. 2.) |? "d2= diag(1 2)"
 let d3 = d1 / d2 |? "d1/d2"
 
+let exp_eye = exp eye |? "exp id = diag(e,e)"
 
 let sym = mat2 (vec2 0. 1.) (vec2 1. 0.)
 

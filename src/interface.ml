@@ -155,6 +155,9 @@ module type Core = sig
     -> ('dim, 'rank2) t ->
     ('dim,'rank3) t
 
+  (** [exp m = 1 + m + m ** 2 / 2 + m **3 / 3! … ] *)
+  val exp: ('dim,'rank) t -> ('dim,'rank) t
+
   (** [ t ** k] is [ t * … * t ] k-time *)
   val ( ** ) : ('dim,'rank) t -> int -> ('dim,'rank) t
 

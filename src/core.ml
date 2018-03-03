@@ -401,6 +401,8 @@ let ( ^ ) a b =
   done;
   data
 
+let ( *% ) x = map ( ( *. ) x )
+
 let ( * ) a b = match rank a, rank b with
   | 0, _ -> smap ( *. ) a b
   | _, 0 -> smap ( *. ) b a
@@ -470,6 +472,13 @@ let rec pow k x =
     else
       pow (k lsr 1) (x*x)
 
+
+let rec pow_2_k ln_2_k x =
+  match ln_2_k with
+  | 0 -> x
+  | 1 -> x * x
+  | k -> pow_2_k (k -1) (x*x)
+
 let pow k x = if k < 0 then
     pow (-k) (inv x)
   else
@@ -483,6 +492,24 @@ let norm x = sqrt (x|*|x)
 let norm_1 = A.fold (fun acc x -> acc +. abs_float x ) 0.
 let norm_q q a =
   (A.fold (fun acc x -> acc +. (abs_float x) **. q ) 0. a) **. (1./.q)
+
+let theta_13 = 5.371920351148152e0
+let pade_13= [|
+  64764752532480000.;
+  32382376266240000.;
+  7771770303897600.;
+  1187353796428800.;
+  129060195264000.;
+  10559470521600.;
+  670442572800.;
+  33522128640.;
+  1323241920.;
+  40840800.;
+  960960.;
+  16380.;
+  182.;
+  1.
+|]
 
 
 let (+) a b =
@@ -500,6 +527,29 @@ let (-) a b =
       (fun n -> b#.(n) -. a#.(0))
   else map2 (-.) a b
 
+
+
+(* Higham, 2005 *)
+let expm a =
+  let b = pade_13 in
+  let norm1 = norm_1 a in
+  let s = max 0 @@ snd @@ frexp (norm1 /. theta_13) in
+  let a = map (fun f -> ldexp f s) a in
+  let a0 = eye (dim a) in
+  let a2 = a *a in let a4 = a2 * a2 in let a6 = a2 * a4 in
+  let u =
+    a *
+    (a6 * ( b.(13) *% a6 + b.(11) *% a4 + b.(9) *% a2)
+     + b.(7) *% a6 + b.(5) *% a4 + b.(3) *% a2 + b.(1) *% a0) in
+  let v =
+    (a6 * ( b.(12) *% a6 + b.(10) *% a4 + b.(8) *% a2)
+     + b.(6) *% a6 + b.(4) *% a4 + b.(2) *% a2 + b.(0) *% a0) in
+  pow_2_k  (-s) ( (u + v) / (v - u) )
+
+let exp m = match rank m with
+  | 0 | 1 -> map exp m
+  | 2 -> expm m
+  | _ -> assert false
 
 let floor a = int_of_float ( a#.(0) )
 ;;
