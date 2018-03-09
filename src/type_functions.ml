@@ -13,33 +13,33 @@ type 'a four = [`four of 'a]
 type ('a,'b,'c) any =
   [< `zero of 'b & 'a | `one of 'b & 'a | `two of 'b & 'a] as 'c
 
-type ('a, 'b,'c, 'parameters) product =
+type ('a, 'b,'c,'dim1,'dim2,'dim3, 'parameters) product =
   [<`zero of 'b & (* scalar broadcasting *)
-             [< `zero of 'c & 'p1 z
-             | `one of 'c & 'p1 one
-             | `two of 'c & 'p1 two]
+             [< `zero of 'c * 'dim3 & 'p1 z * 'p2 one
+             | `one of 'c * 'dim3 & 'p1 one * 'dim2
+             | `two of 'c * 'dim3 & 'p1 two * 'dim2 ]
   | `one of 'b &
-            [< `zero of 'c & 'p1 one
-            | `one of 'c & 'p1 one
-            | `two of 'c & 'p1 one]
+            [< `zero of 'c * 'dim3 & 'p1 one * 'dim2
+            | `one of 'c * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1
+            | `two of 'c * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1 ]
   | `two of 'b &
-            [< `zero of 'c & 'p1 two
-            | `one of 'c & 'p1 one
-            | `two of 'c & 'p1 two]
+            [< `zero of 'c * 'dim3 & 'p1 two * 'dim2
+            | `one of 'c * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1
+            | `two of 'c * 'dim2 * 'dim3 & 'p1 two * 'dim1 * 'dim1 ]
   ] as 'a
   constraint 'parameters = 'p1 * 'p2 * 'p3
 (** (x,y,z,_ ) product computes the rank of x * y and
     put the result inside z *)
 
-type ('a, 'b,'c, 'parameters) div =
+type ('a, 'b,'c,'dim1,'dim2,'dim3, 'parameters) div =
   [<`zero of 'b & (* scalar broadcasting *)
-             [< `zero of 'c & 'p1 z]
+             [< `zero of 'c * 'dim3  & 'p1 z * 'p2 one]
   | `one of 'b &
-            [< `zero of 'c & 'p1 one
-            | `one of 'c & 'p1 one]
+            [< `zero of 'c * 'dim3 & 'p1 one * 'dim1
+            | `one of 'c * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1]
   | `two of 'b &
-            [< `zero of 'c & 'p1 two
-            | `two of 'c & 'p2 two
+            [< `zero of 'c * 'dim3 & 'p1 two * 'dim1
+            | `two of 'c * 'dim2 * 'dim3 & 'p2 two * 'dim1 * 'dim1
             ]
   ] as 'a
   constraint 'parameters = 'p1 * 'p2 * 'p3
@@ -58,17 +58,17 @@ type ('a, 'b,'c, 'parameters) rank_diff =
     put the result inside z *)
 
 
-type ('a, 'b,'c, 'parameters) sum =
+type ('a, 'b,'c,'dim1,'dim2,'dim3, 'parameters) sum =
   [<`zero of 'b & (* scalar broadcasting *)
-             [< `zero of 'c & 'p1 z
-             | `one of 'c & 'p1 one
-             | `two of 'c & 'p1 two]
+             [< `zero of 'c * 'dim3 & 'p1 z * 'p2 one
+             | `one of 'c * 'dim3 & 'p1 one * 'dim2
+             | `two of 'c * 'dim3 & 'p1 two * 'dim2]
   | `one of 'b &
-            [< `zero of 'c & 'p1 one
-            | `one of 'c & 'p1 one ]
+            [< `zero of 'c * 'dim3 & 'p1 one * 'dim1
+            | `one of 'c * 'dim1 * 'dim3 & 'p1 one * 'dim2 * 'dim2 ]
   | `two of 'b &
-            [< `zero of 'c & 'p1 two
-            | `two of 'c & 'p1 two]
+            [< `zero of 'c * 'dim3 & 'p1 two * 'dim1
+            | `two of 'c * 'dim1 * 'dim3 & 'p1 two * 'dim1 * 'dim3 ]
   ] as 'a
   constraint 'parameters = 'p1 * 'p2 * 'p3
 (** (x,y,z,_ ) sum computes the rank of x + y and
@@ -94,30 +94,19 @@ type ('dim1,'dim2,'dim3,'p) simple_sum =
     | `three of 'dim2 & [< `one of 'dim3 & 'p four]
     ] as 'dim1
 
-type ('rank1,'rank2, 'dim1,'dim2,'dim3,'p) nat_sum =
-  [< `zero of 'rank2 &
-              [< `zero of 'dim3 & 'p two
-              | `one of 'dim2 &
-                        ( [< `two of 'dim3 & 'p three
-                          | `three of 'dim3 & 'p four ] as 'scalar)
-              ]
-  | `one of 'rank2 &
-            [< `zero of 'dim1 & 'scalar
-            | `one of 'dim1 &
-                      [< `one of 'dim2 &
-                                 [< `one of 'dim3 & 'p two
-                                 | `two of 'dim3 & 'p three
-                                 | `three of 'dim3 & 'p four
-                                 ]
-                      | `two of 'dim2 &
-                                [< `one of 'dim3 & 'p three
-                                | `two of 'dim3 & 'p four
-                                ]
-                      | `three of 'dim2 & [< `one of 'dim3 & 'p four]
-                      ]
-            ]
-  ] as 'rank1
-
+(* dim1 + dim2 = dim3 *)
+type ('dim1,'dim2,'dim3,'p) nat_sum =
+  [< `one of 'dim2 &
+             [< `one of 'dim3 & 'p two
+             | `two of 'dim3 & 'p three
+             | `three of 'dim3 & 'p four ]
+  | `two of 'dim2 &
+             [< `one of 'dim3 & 'p three
+             | `two of 'dim3 & 'p four ]
+  | `three of 'dim2 &
+              [< `one of 'dim3 & 'p four ]
+  ]
+  as 'dim1
 
 (* (dim + rank) (dim + len + rank ) + (dim,rank) *)
 type ('tensor_rank,'index_rank,'res_rank,'dim,'res_dim, 'len, 'parameters)

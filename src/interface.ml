@@ -146,7 +146,7 @@ module type Core = sig
   type (+'dim,+'rank) t
 
   val pp: Format.formatter -> ('dim,'rank) t -> unit
-  type +'x scalar = ('a, 'b z) t constraint 'x = 'a * 'b
+  type +'x scalar = ('a one, 'b z) t constraint 'x = 'a * 'b
 
   type +'x vec2 = ('a two,'b one) t constraint 'x = 'a * 'b
   type +'x vec3 = ('a three,'b one) t constraint 'x = 'a * 'b
@@ -165,9 +165,10 @@ module type Core = sig
   (** [vec$n' v] extends a vector of dimension [d <= n]
       to a vector of dimension v by repeting the last value
       of the vector *)
-  val vec2': (_ two, [< _ one | _ z] ) t -> _ vec2
-  val vec3': ([< _ two| _ three] , [< _ one | _ z] ) t -> _ vec4
-  val vec4': ([< _ two| _ three | _ four ] , [< _ one | _ z] ) t -> _ vec3
+  val vec2': ([< _ one | _ two], [< _ one | _ z] ) t -> _ vec2
+  val vec3': ([< _ one | _ two| _ three] , [< _ one | _ z] ) t -> _ vec4
+  val vec4':
+    ([< _ one | _ two| _ three | _ four ] , [< _ one | _ z] ) t -> _ vec3
 
   val mat2: _ vec2 -> _ vec2 -> _ mat2
   val mat3: _ vec3 -> _ vec3 -> _ vec3 -> _ mat3
@@ -180,12 +181,12 @@ module type Core = sig
 
   (** [x + y] is the standard vector sum, except for scalar argument
       which are broadcasted to a constant tensor *)
-  val (+): ('a,('rank1,'rank2,'rank3,_) sum ) t
-    -> ('a,'rank2) t -> ('a,'rank3) t
+  val (+): ('dim1,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t
+    -> ('dim2,'rank2) t -> ('dim3,'rank3) t
 
   (** [x - y] is the standard vector difference, except for scalar argument
       which are broadcasted to a constant tensor *)
-  val (-): ('a,('rank1,'rank2,'rank3,_) sum ) t
+  val (-): ('a,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t
     -> ('a,'rank2) t -> ('a,'rank3) t
 
   (** [ x * y] is:
@@ -193,18 +194,18 @@ module type Core = sig
       - the matrix product if x or y is a matrix
       - the element-wise (hadamard) product otherwise
   *)
-  val ( * ) : ('dim, ('rank1, 'rank2, 'rank3, _ ) product) t
-    -> ('dim, 'rank2) t ->
-    ('dim,'rank3) t
+  val ( * ) : ('dim1, ('rank1, 'rank2, 'rank3,'dim1,'dim2,'dim3, _ ) product) t
+    -> ('dim2, 'rank2) t ->
+    ('dim3,'rank3) t
 
   (** [ x / y] is:
       - the external product if x or y is a scalar
       - the matrix division if x and y are a matrix
       - the element-wise division if both x and y are a vector
   *)
-  val ( / ) : ('dim, ('rank1, 'rank2, 'rank3, _ ) div) t
-    -> ('dim, 'rank2) t ->
-    ('dim,'rank3) t
+  val ( / ) : ('dim1, ('rank1, 'rank2, 'rank3,'dim1,'dim2,'dim3, _ ) div) t
+    -> ('dim2, 'rank2) t ->
+    ('dim3,'rank3) t
 
   (** [exp m = 1 + m + m ** 2 / 2 + m **3 / 3! … ] *)
   val exp: ('dim,'rank) t -> ('dim,'rank) t
@@ -240,8 +241,8 @@ module type Core = sig
     ('dim, _ one) t -> ('dim2, 'rank2) t
 
   (** Vector concatenation : [ v |+| w ] *)
-  val ( |+| ): ('dim1, ('rank1,'rank2,'dim1,'dim2,'dim3,_) nat_sum) t ->
-    ('dim2, 'rank2) t -> ('dim3, _ one) t
+  val ( |+| ): (('dim1,'dim2,'dim3,_) nat_sum, [< _ one | _ z] ) t ->
+    ('dim2, [< _ one | _ z] ) t -> ('dim3, _ one) t
 
   val floor: _ scalar -> int
 end
