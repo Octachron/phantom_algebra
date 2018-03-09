@@ -17,11 +17,11 @@ let test x expected name =(*
     Format.printf
       "@[<hv>  \x1b[94m%s:\x1b[97m@ @;<0 8>@[%a@]@,@]@." name pp x
   | Some y -> if negligible @@ distance x y then
-      Format.printf "@[  \x1b[94m%s\x1b[97m: \x1b[32m[OK]\x1b[97m@]@." name
+      Format.printf "@[  \x1b[94m%s\x1b[97m: \x1b[32m[✔]\x1b[97m@]@." name
     else begin
       failure := true;
       Format.printf
-        "@[<hv 8>  \x1b[94m%s\x1b[97m:\x1b[31m[FAIL]\x1b[97m@ @ \
+        "@[<hv 8>  \x1b[94m%s\x1b[97m:\x1b[31m[✘]\x1b[97m@ @ \
          got:@,%a@,    ≠    @,expected:@,%a@,@]@."
         name pp x pp y end
   end
@@ -45,7 +45,7 @@ let ew = "(0 1) + 1" := v + vec2 1. 1.  =? vec2 1. 2.
 let v' = "s + v" := s + v  =? vec2 7.  8.
 let v'' = "s * v" := s * v  =? vec2 0. 7.
 
-let v''' = v' * ( scalar 1. + v'') |? "v' * ( 1 + v'') = (7, 64)"
+let v''' = "v' * ( 1 + v'')" := v' * ( scalar 1. + v'') =? vec2 7. 64.
 
 let xyrot theta = mat3
     (vec3 (  cos theta) (sin theta) 0.)
@@ -54,7 +54,10 @@ let xyrot theta = mat3
 
 
 let pi = 4. *. atan 1.
-let r = xyrot (pi /.6.) |? "Rxy_(π/6)"
+let r = "Rxy_(π/6)" :=
+    xyrot (pi /.6.) =?
+    let x = sqrt 3. /. 2. and y = 0.5 in
+    mat3 (vec3 x y 0.) (vec3 (-.y) x 0.) (vec3 0. 0. 1.)
 let r' =
 "rotation x y (π/6)" :=
   rotation (vec3 1. 0. 0.) (vec3 0. 1. 0.) (pi /. 6.) =? r
@@ -127,6 +130,25 @@ let u () = Random.float 1.
   let mat4 = mat4 <*> vec4 <$> vec4 <$> vec4 <$> vec4
 end
 
+let linear =
+  let open Random in
+  let s =scalar () in
+  let v = vec4 () in
+  let w = vec4 () in
+  let u = vec4 () in
+  "s * (( u + v ) + w) = s * u + (s * v + s * w)" :=
+    s * (( u + v ) + w) =? s * u + (s * v + s * w)
+
+let mat_distribution =
+  let open Random in
+  let s = scalar () in
+  let m = mat4 () in
+  let n = mat4 () in
+  let u = vec4 () in
+  let v = vec4 () in
+  "s * (m + n) * (u + v) = s m u + s m v + s n u + s n v" :=
+    s*(m+n)*(u+v) =? s * m * u + s * m * v + s * n * u + s * n * v
+
 let rand =
   let m1 = Random.mat3 () in
   let m2 = Random.mat3 () in
@@ -172,4 +194,5 @@ let diag = "Id(xx,xy,yy)" := eye.%[xx'&xy'&yy'] =? vec3 1. 0. 1.
 
 ;; if !failure then
   Format.printf "\x1b[91m⛅⛅⛅⛅⛅⛅⛅⛅⛅FAILURE⛅⛅⛅⛅⛅⛅⛅⛅⛅\x1b[97m@."
-else Format.printf "\x1b[92m☼☼☼☼Success☼☼☼☼\x1b[97m@."
+else Format.printf
+    "\x1b[33m☼☼☼☼☼☼☼☼☼☼☼☼☼☼☼☼\x1b[92mSuccess\x1b[33m☼☼☼☼☼☼☼☼☼☼☼☼☼☼☼☼\x1b[97m@."
