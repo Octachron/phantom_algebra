@@ -1,5 +1,29 @@
 Phantom-algebra is a library implementing strongly-typed small tensors
 with dimensions 0 ≤ 4, rank ≤ 2, and limited to square matrices.
+
+It enables to manipulate vector expression with an uniform notation:
+
+```OCaml
+    open Phantom_algebra.Core
+    let v = vec3 1. 2. 3.
+    let w = vec3 3. 2. 1.
+    let u = scalar 2. + cross (v + w) (v - w)
+    let rot = rotation u v 1.
+    let r = w + rot * v
+```
+
+while still catching non-sensical operaton at compile time
+
+```OCaml
+v + rot
+```
+>  Type 'b two = [ `two of 'b ]
+>  is not compatible with type
+>  [< `one of … | `zero of …] as 'c
+
+Type errors tend to be quite long to say the least, but individual type
+of scalar, vector and matrix are much simpler.
+
 It is inspired by GLSL conventions:
 
   * addition is the usual vector addition, with scalar broadcasted
