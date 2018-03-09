@@ -313,7 +313,7 @@ let vec2' a =
 
 let vec_stretch k a =
   if rank a = Scalar then
-    A.make 2 a#.(0)
+    A.make k a#.(0)
   else
     let data = A.create k in
     A.iteri (A.set data) a;
