@@ -10,7 +10,7 @@ module type Rank = sig
   (** Rank-related types *)
 
   (** Tensor rank: scalar, vector or matrix *)
-  type _ rank
+  type +_ rank
   val scalar: _ z rank
   val vector: _ one rank
   val matrix: _ two rank
@@ -23,8 +23,9 @@ module type Dim = sig
   (** Dimension-related types *)
 
   (** Dimension for vectors and matrix, 1d vectors are considered scalars *)
-  type _ dim
+  type +_ dim
 
+  val d1: _ one dim
   val d2: _ two dim
   val d3: _ three dim
   val d4: _ four dim
@@ -32,6 +33,26 @@ module type Dim = sig
   val dim_to_int: _ dim -> int
 end
 
+module type Matching = sig
+  type +'a dim
+  type +'a rank
+
+  val rank_match:
+    [< `zero of 'a & 'r | `one of 'b & 'r | `two of 'c & 'r ] rank
+    -> ( _   z rank   -> 'a )
+    -> ( _ one rank -> 'b )
+    -> ( _ two rank -> 'c )
+    -> 'r
+
+  val dim_match:
+    [< `one of 'a & 'r | `two of 'b & 'r | `three of 'c & 'r
+    | `four of 'd & 'r ] dim
+    -> ( _   one dim -> 'a )
+    -> ( _   two dim -> 'b )
+    -> ( _ three dim -> 'c )
+    -> ( _  four dim -> 'd )
+    -> 'r
+end
 
 module type Index = sig
 (** Index data type *)
@@ -166,9 +187,9 @@ module type Core = sig
       to a vector of dimension v by repeting the last value
       of the vector *)
   val vec2': ([< _ one | _ two], [< _ one | _ z] ) t -> _ vec2
-  val vec3': ([< _ one | _ two| _ three] , [< _ one | _ z] ) t -> _ vec4
+  val vec3': ([< _ one | _ two| _ three] , [< _ one | _ z] ) t -> _ vec3
   val vec4':
-    ([< _ one | _ two| _ three | _ four ] , [< _ one | _ z] ) t -> _ vec3
+    ([< _ one | _ two| _ three | _ four ] , [< _ one | _ z] ) t -> _ vec4
 
   val mat2: _ vec2 -> _ vec2 -> _ mat2
   val mat3: _ vec3 -> _ vec3 -> _ vec3 -> _ mat3
@@ -314,4 +335,6 @@ module type S = sig
   include Builtin with
     type 'a dim := 'a dim and type 'a rank := 'a rank
     and type ('a,'b) tensor := ('a,'b) t
+  include Matching with
+    type 'a dim := 'a dim and type 'a rank := 'a rank
 end

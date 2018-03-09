@@ -1,15 +1,18 @@
 open Type_functions
 
 type _ dim =
+  | D1
   | D2
   | D3
   | D4
 
+let d1 = D1
 let d2 = D2
 let d3 = D3
 let d4 = D4
 
 let dim_to_int: type a. a dim -> int = function
+  | D1 -> 1
   | D2 -> 2
   | D3 -> 3
   | D4 -> 4
@@ -619,6 +622,22 @@ let zero (type a) (d: a dim) r = match r with
   | Matrix -> A.make (mat_len @@ dim_to_int d) 0.
 
 let id d = id (dim_to_int d)
+
+let dim_match dim one two three four =
+(* we are using intersection type in a way that the typechecker cannot infer *)
+  match dim with
+  | D1 -> Obj.magic @@ one D1
+  | D2 -> Obj.magic @@ two D2
+  | D3 -> Obj.magic @@ three D3
+  | D4 ->   Obj.magic @@ four D4
+
+
+let rank_match rank zero one two =
+(* we are using intersection type in a way that the typechecker cannot infer *)
+  match rank with
+  | Scalar -> Obj.magic @@ zero Scalar
+  | Vector -> Obj.magic @@ one Vector
+  | Matrix -> Obj.magic @@ two Matrix
 
 ;;
 #if OCAML_MAJOR>=4 && OCAML_MINOR>=6
