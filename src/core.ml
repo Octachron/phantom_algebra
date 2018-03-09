@@ -474,6 +474,9 @@ let dirac i j = if i=j then 1. else 0.
 let eye dim =
   mat_init dim dirac
 
+let diag vec =
+  mat_init (dim vec) (fun i j -> if i = j then vec#.i else 0.)
+
 let id dim rank = match rank with
   | Scalar -> scalar 1.
   | Vector -> A.make dim 1.

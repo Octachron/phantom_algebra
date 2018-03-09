@@ -307,9 +307,11 @@ module type Builtin = sig
   val id:  'dim dim -> 'rank rank -> ('dim,'rank) tensor
 
   (** [eye dim] is [id matrix dim], the identity matrix with ones
-      on the diagonals *)
+      on the diagonal *)
     val eye: 'a dim -> ('a, _ two) tensor
 
+  (** [diag vec] is the diagonal matrix with [vec] on the diagonal *)
+    val diag: ('dim, _ one) tensor -> ('dim, _ two) tensor
 
   (** [normalize x] is [x / scalar (norm x)] *)
   val normalize: ('dim,'rank) tensor -> ('dim,'rank) tensor
