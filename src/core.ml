@@ -297,8 +297,8 @@ let vec3 x y z =
 let vec4 x y z t =
   let a = A.create 4 in
   A.set a 0 x;
-  A.set a 1 x;
-  A.set a 2 y;
+  A.set a 1 y;
+  A.set a 2 z;
   A.set a 3 t;
   a
 
@@ -424,7 +424,7 @@ let ( ^ ) a b =
   let data = A.create (mat_len dim) in
   for i = 0 to dim -1 do
     for j = 0 to dim - 1 do
-      let r =  a#.(j) *. b#.(i) -. a#.(i) *. b#.(j) in
+      let r =  a#.(i) *. b#.(j) -. a#.(j) *. b#.(i) in
       A.set data ( i * dim + j ) @@ r +. data#.( i + dim + j);
       A.set data ( j * dim + i ) @@ data#.( j + dim + i) -. r
     done
@@ -585,8 +585,8 @@ let rotation x y theta =
     let cosm1 = cos theta -. 1. and sin = sin theta in
     let f v =
       let vx = (x|*|v) and vy = (y|*|v) in
-      ( cosm1 *. vx -. sin *. vy) *% x
-      + ( sin *. vx +. cosm1 *. vy) *% y
+      ( cosm1 *. vx +. sin *. vy) *% x
+      + ( -. sin *. vx +. cosm1 *. vy) *% y
       + v
     in
     row_map f (eye (dim x))
