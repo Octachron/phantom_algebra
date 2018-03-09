@@ -108,6 +108,9 @@ module A = struct
   let map f x = init (len x) (fun i -> f x#.i)
   let fold f x a = let res = ref x in
     for i = 0 to len a do res := f !res a#.i done; !res
+
+    let fold2 f acc x y  = let res = ref acc in
+    for i = 0 to min (len x) (len y) do res := f !res x#.i y#.i done; !res
 end
 
 
@@ -515,6 +518,8 @@ let ( **. ) = ( ** )
 let ( ** ) x k = pow k x
 
 let norm x = sqrt (x|*|x)
+let distance x y =
+  sqrt @@ A.fold2 (fun acc x y-> acc +. (x -. y) **. 2.) 0. x y
 
 let norm_1 = A.fold (fun acc x -> acc +. abs_float x ) 0.
 let norm_q q a =

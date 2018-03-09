@@ -241,6 +241,7 @@ module type Core = sig
 
   (** [norm x] is the canonical norm of x *)
   val norm:  ('dim, 'rank) t -> k
+  val distance: ('dim,'rank) t -> ('dim,'rank) t -> k
 
   (** [norm_1 x] is ∑ |x_i| *)
   val norm_1:  ('dim, 'rank) t -> k
