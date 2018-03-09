@@ -17,9 +17,9 @@ while still catching non-sensical operaton at compile time
 ```OCaml
 v + rot
 ```
->  Type 'b two = [ `two of 'b ]
+>  `` Type 'b two = [ `two of 'b ]
 >  is not compatible with type
->  [< `one of … | `zero of …] as 'c
+>  [< `one of … | `zero of … ] as 'c ``
 
 Type errors tend to be quite long to say the least, but individual type
 of scalar, vector and matrix are much simpler.
