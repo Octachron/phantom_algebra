@@ -270,6 +270,9 @@ module type Core = sig
   val (+): ('dim1,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t
     -> ('dim2,'rank2) t -> ('dim3,'rank3) t
 
+  (** [x <+> y] is the standard vector sum, without broadcasting *)
+  val (<+>): ('dim,'rank) t -> ('dim,'rank) t -> ('dim,'rank) t
+
   (** [~-x] is the standard addition inversesum *)
   val (~-): ('dim,'rank) t -> ('dim,'rank) t
 
@@ -280,6 +283,9 @@ module type Core = sig
       which are broadcasted to a constant tensor *)
   val (-): ('a,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t
     -> ('a,'rank2) t -> ('a,'rank3) t
+
+  (** [x <-> y] is the standard vector difference, without broadcasting *)
+  val (<->): ('dim,'rank) t -> ('dim,'rank) t -> ('dim,'rank) t
 
   (** [ x * y] is:
       - the external product if x or y is a scalar

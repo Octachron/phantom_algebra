@@ -555,12 +555,18 @@ let pade_13= [|
 |]
 
 
+
+let (<+>) x y = map2 (+.) x y
+let (<->) x y = map2 (-.) x y
+
+
 let (+) a b =
   if rank a = Scalar then
     smap (+.) a b
   else if rank b = Scalar then
     smap (+.) b a
-  else map2 (+.) a b
+  else a <+> b
+
 
 let (-) a b =
   if rank a = Scalar then
@@ -568,7 +574,7 @@ let (-) a b =
   else if rank b = Scalar then
     A.init (A.len b)
       (fun n -> b#.(n) -. a#.(0))
-  else map2 (-.) a b
+  else a <-> b
 
 let (~-) = map (~-.)
 let (~+) x = scalar x
