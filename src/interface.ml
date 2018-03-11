@@ -270,6 +270,12 @@ module type Core = sig
   val (+): ('dim1,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t
     -> ('dim2,'rank2) t -> ('dim3,'rank3) t
 
+  (** [~-x] is the standard addition inversesum *)
+  val (~-): ('dim,'rank) t -> ('dim,'rank) t
+
+  (** [+x] lift literal to scalar *)
+  val (~+): k -> _ scalar
+
   (** [x - y] is the standard vector difference, except for scalar argument
       which are broadcasted to a constant tensor *)
   val (-): ('a,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t

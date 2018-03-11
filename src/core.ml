@@ -1,5 +1,13 @@
 open Type_functions
 
+module Int = struct
+  let(+) = (+)
+  let (-) = (-)
+  let (/) = (/)
+  let ( * ) = ( * )
+  let ( ~+ ) = ( ~+ )
+  let ( ~- ) = ( ~- )
+end
 type _ dim =
   | D1
   | D2
@@ -562,6 +570,8 @@ let (-) a b =
       (fun n -> b#.(n) -. a#.(0))
   else map2 (-.) a b
 
+let (~-) = map (~-.)
+let (~+) x = scalar x
 
 let normalize x =
   let n = norm x in
@@ -614,7 +624,7 @@ let expm a =
   let v =
     (a6 * ( b.(12) *% a6 + b.(10) *% a4 + b.(8) *% a2)
      + b.(6) *% a6 + b.(4) *% a4 + b.(2) *% a2 + b.(0) *% a0) in
-  pow_2_k  (-s) ( (u + v) / (v - u) )
+  pow_2_k  Int.(-s) ( (u + v) / (v - u) )
 
 let exp m = match rank m with
   | Scalar | Vector -> map exp m
