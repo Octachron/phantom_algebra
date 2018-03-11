@@ -54,6 +54,71 @@ module type Matching = sig
     -> 'r
 end
 
+module type Cloning = sig
+  type (+'dim,+'rank) t
+  val clone_2:
+    (
+      [< `one   of ('dim1 * 'dim2 as 't)
+                    & _ one   * _ one
+    |  `two   of 't & _ two   * _ two
+    |  `three of 't & _ three * _ three
+    |  `four  of 't & _ four  * _ four
+    ],
+    [< `zero of ('rank1 * 'rank2 as 'r)
+                 & _ z   * _ z
+    | `one of 'r & _ one * _ one
+    | `two of 'r & _ two * _ two
+    ]) t -> ('dim1,'rank1) t * ('dim2,'rank2) t
+
+  val clone_3:
+    (
+      [< `one   of ('dim1 * 'dim2 * 'dim3 as 't)
+                    & _ one   * _ one   * _ one
+    |  `two   of 't & _ two   * _ two   * _ two
+    |  `three of 't & _ three * _ three * _ three
+    |  `four  of 't & _ four  * _ four  * _ four
+    ],
+    [< `zero of ('rank1 * 'rank2 * 'rank3 as 'r)
+                 & _ z   * _ z   * _ z
+    | `one of 'r & _ one * _ one * _ one
+    | `two of 'r & _ two * _ two * _ two
+    ]) t -> ('dim1,'rank1) t * ('dim2,'rank2) t * ('dim3,'rank3) t
+
+  val clone_7:
+    (
+      [< `one of
+           ('dim1 * 'dim2 * 'dim3 * 'dim4 * 'dim5 * 'dim6 * 'dim7 as 'd)
+              & _ one   * _ one   * _ one  * _ one  * _ one  * _ one  * _ one
+      |  `two of
+              'd
+              & _ two   * _ two   * _ two  * _ two  * _ two  * _ two  * _ two
+      |`three of
+              'd
+              & _ three * _ three * _ three* _ three* _ three* _ three* _ three
+      | `four of
+              'd
+              & _ four  * _ four  * _ four * _ four * _ four * _ four * _ four
+      ],
+      [< `zero of
+           ('rank1 * 'rank2 * 'rank3 * 'rank4 * 'rank5 * 'rank6 * 'rank7 as 'r)
+           & _ z   * _ z   * _ z  * _ z   * _ z   * _ z   * _ z
+      | `one of
+           'r
+           & _ one * _ one * _ one* _ one * _ one * _ one * _ one
+      | `two of 'r
+                & _ two * _ two * _ two* _ two * _ two * _ two * _ two
+      ]) t ->
+        ('dim1,'rank1) t
+      * ('dim2,'rank2) t
+      * ('dim3,'rank3) t
+      * ('dim4,'rank4) t
+      * ('dim5,'rank5) t
+      * ('dim6,'rank6) t
+      * ('dim7,'rank7) t
+
+end
+
+
 module type Index = sig
 (** Index data type *)
 
@@ -340,4 +405,5 @@ module type S = sig
     and type ('a,'b) tensor := ('a,'b) t
   include Matching with
     type 'a dim := 'a dim and type 'a rank := 'a rank
+  include Cloning with type ('a,'b) t := ('a,'b) t
 end

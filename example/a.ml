@@ -12,11 +12,12 @@ let test x expected name =(*
     Format.fprintf ppf
       "——————————————————————————————————————————————————————————————————————@,"
   in*)
+  let x, out = clone_2 x in
   begin match expected with
   | None ->
     Format.printf
       "@[<hv>  \x1b[94m%s:\x1b[97m@ @;<0 8>@[%a@]@,@]@." name pp x
-  | Some y -> if negligible @@ distance x y then
+  | Some y -> if negligible @@ norm(x - y) then
       Format.printf "@[  \x1b[94m%s\x1b[97m: \x1b[32m[✔]\x1b[97m@]@." name
     else begin
       failure := true;
@@ -25,7 +26,7 @@ let test x expected name =(*
          got:@,%a@,    ≠    @,expected:@,%a@,@]@."
         name pp x pp y end
   end
-  ; x
+  ; out
 
 let ( =? ) x expected name = test x (Some expected) name
 let (:=) x f = f x

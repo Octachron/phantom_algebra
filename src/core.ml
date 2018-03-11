@@ -109,7 +109,7 @@ module A = struct
   let fold f x a = let res = ref x in
     for i = 0 to len a do res := f !res a#.i done; !res
 
-    let fold2 f acc x y  = let res = ref acc in
+  let fold2 f acc x y  = let res = ref acc in
     for i = 0 to min (len x) (len y) do res := f !res x#.i y#.i done; !res
 end
 
@@ -646,6 +646,10 @@ let rank_match rank zero one two =
   | Scalar -> Obj.magic @@ zero Scalar
   | Vector -> Obj.magic @@ one Vector
   | Matrix -> Obj.magic @@ two Matrix
+
+let clone_2 v = v, v
+let clone_3 v = v, v, v
+let clone_7 v = v, v, v, v ,v ,v ,v
 
 ;;
 #if OCAML_MAJOR>=4 && OCAML_MINOR>=6
