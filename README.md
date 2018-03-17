@@ -80,7 +80,7 @@ It is inspired by GLSL conventions:
 
     ```OCaml
      let v = vec4 0. 1. 2. 3.
-     let w = v%[w'&z'&'y&'x] (* slicing a vector yields a scalar,
+     let w = v.%[w'&z'&'y&'x] (* slicing a vector yields a scalar,
      and 4 scalars grouped together become a vector *)
      ;; w = vec4 3. 2. 1. 0.
      let mat = eye d2
@@ -98,7 +98,7 @@ It is inspired by GLSL conventions:
   * Usual mathematics functions have been extended to operates
     element-wise on tensor, they are able in the `Math` module
 
-  ```OCaml
+   ```OCaml
       let v = Math.cos (vec2 1. 2.)
    ```
 
@@ -108,13 +108,13 @@ It is inspired by GLSL conventions:
        let id = eye d2
        let rxy t = rotation (vec3 1. 0. 0.) (vec3 0. 1. 0.) t
        let id = diag (vec3 1. 1. 1.)
-    ```
+   ```
 
    * The exponential function on matrices is the matrix exponentiation
 
-     ```OCaml
-      exp (mat2 (0. 1.) (0. -1) ) = rxy 1.
-    ```
+   ```OCaml
+    ;; exp (mat2 (0. 1.) (0. -1) ) = rxy 1.
+   ```
 
 
    * Vectors can be concatened and stretched to a given dimension
