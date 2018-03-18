@@ -270,11 +270,13 @@ module type Core = sig
   val (+): ('dim1,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t
     -> ('dim2,'rank2) t -> ('dim3,'rank3) t
 
+
   (** [x <+> y] is the standard vector sum, without broadcasting *)
   val (<+>): ('dim,'rank) t -> ('dim,'rank) t -> ('dim,'rank) t
 
   (** [~-x] is the standard addition inversesum *)
   val (~-): ('dim,'rank) t -> ('dim,'rank) t
+
 
   (** [+x] lift literal to scalar *)
   val (~+): k -> _ scalar
@@ -316,6 +318,11 @@ module type Core = sig
   *)
   val ( |*| ) : ('dim, 'rank) t -> ('dim,'rank) t -> k
 
+  (** [cross v w] maps either two 3d vectors to
+      a 3d pseudo-vector, or two 2d vectors to a scalar *)
+  val cross:  ( ('dim, 'dim2 * 'rank2, _ ) cross , _ one) t ->
+    ('dim, _ one) t -> ('dim2, 'rank2) t
+
   (** [norm x] is the canonical norm of x *)
   val norm:  ('dim, 'rank) t -> k
   val distance: ('dim,'rank) t -> ('dim,'rank) t -> k
@@ -334,16 +341,20 @@ module type Core = sig
   *)
   val ( ^ ): ('dim, _ one) t -> ('dim, _ one ) t -> ('dim, _ two ) t
 
-  (** [cross v w] maps either two 3d vectors to
-      a 3d pseudo-vector, or two 2d vectors to a scalar *)
-  val cross:  ( ('dim, 'dim2 * 'rank2, _ ) cross , _ one) t ->
-    ('dim, _ one) t -> ('dim2, 'rank2) t
+
+  (** [commutator m n] is [m * n - n * m] *)
+  val commutator: ('dim, _ two) t -> ('dim, _ two) t -> ('dim, _ two) t
+
+  (** [anticommutator m n] is [m * n + n * m] *)
+  val anticommutator: ('dim, _ two) t -> ('dim, _ two) t -> ('dim, _ two) t
+
+  (** [trace m] is [∑_i m_ii] *)
+  val trace: ('dim, _ two) t -> k
 
   (** Vector concatenation : [ v |+| w ] *)
   val ( |+| ): (('dim1,'dim2,'dim3,_) nat_sum, [< _ one | _ z] ) t ->
     ('dim2, [< _ one | _ z] ) t -> ('dim3, _ one) t
 
-  val floor: _ scalar -> int
 end
 
 module type Indexing = sig

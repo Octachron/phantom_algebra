@@ -667,6 +667,17 @@ let clone_2 v = v, v
 let clone_3 v = v, v, v
 let clone_7 v = v, v, v, v ,v ,v ,v
 
+
+let commutator m n = m * n - n * m
+let anticommutator m n = m * n - n * m
+
+let trace m =
+  let r = ref 0. in
+  let dim = mat_dim m in
+  for i = 0 to Int.(dim - 1) do
+    r := !r +. m#.Int.( i*(1 + dim))
+  done; !r
+
 ;;
 #if OCAML_MAJOR>=4 && OCAML_MINOR>=6
 let (.%()) x = get x

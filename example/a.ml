@@ -179,6 +179,19 @@ module M: sig end = struct
   let t = "dim matching (1 1 1)" := one d3 =? vec3 1. 1. 1.
 end
 
+
+let trace =
+  let a, b ,c = Random.( mat4(), mat4(), mat4 ()) in
+  "trace (ABC) = trace(BCA) " :=
+    scalar (trace (a * b * c)) =? scalar ( trace (b * c * a) )
+
+
+let anticommutator =
+  let a, b ,c = Random.( mat4(), mat4(), mat4 ()) in
+  let ( ^ ) = anticommutator in
+  "[A,[B,C]] + [B,[C,A]] + [C, [A,B]] = 0 " :=
+    (a^(b^c)) + (b^(c^a)) =? ((a^b)^c)
+
 ;;
 #if OCAML_MAJOR>=4 && OCAML_MINOR>=6
 let f = "v_x" :=  v.%[x'] =? scalar 0.
