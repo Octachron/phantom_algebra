@@ -1,36 +1,10 @@
+
 let const_e = exp 1.
 
 open Phantom_algebra.Core
 open Phantom_algebra.Type_functions
+open Tools
 
-let negligible x = x < 1e-12
-
-
-let failure = ref false
-let test x expected name =(*
-  let line ppf =
-    Format.fprintf ppf
-      "——————————————————————————————————————————————————————————————————————@,"
-  in*)
-  let x, out = clone_2 x in
-  begin match expected with
-  | None ->
-    Format.printf
-      "@[<hv>  \x1b[94m%s:\x1b[97m@ @;<0 8>@[%a@]@,@]@." name pp x
-  | Some y -> if negligible @@ norm(x - y) then
-      Format.printf "@[  \x1b[94m%s\x1b[97m: \x1b[32m[✔]\x1b[97m@]@." name
-    else begin
-      failure := true;
-      Format.printf
-        "@[<hv 8>  \x1b[94m%s\x1b[97m:\x1b[31m[✘]\x1b[97m@ @ \
-         got:@,%a@,    ≠    @,expected:@,%a@,@]@."
-        name pp x pp y end
-  end
-  ; out
-
-let ( =? ) x expected name = test x (Some expected) name
-let (:=) x f = f x
-let ( |? ) x name = test x None name
 
 let v = vec2 0. 1. |? "v (0 1)"
 let m = "m = (1 0 | 2 * v)" :=
@@ -91,7 +65,7 @@ let v4' = "concat: vec2 |+| vec2" :=
 let stretch =
   "stretch vec4'  (3. 2. |+| 1.)  ⇒ (3. 2. 1. 1.)" :=
   vec4' (vec2 3. 2. |+| scalar 1.) =? vec4 3. 2. 1. 1.
-let eye = "eye" := eye d2 =? mat2 (vec2 1. 0.) (vec2 0. 1.)
+let eye2 = "eye" := eye d2 =? mat2 (vec2 1. 0.) (vec2 0. 1.)
 
 let di1 =
   "di1= diag (2 1)" := mat2 (vec2 2. 0.) (vec2 0. 1.) =? diag (vec2 2. 1.)
@@ -100,14 +74,14 @@ let di2 = "di2= diag(1 2)" :=
 let di3 = "di1/di2" := di1 / di2 =? diag (vec2 2. 0.5)
 
 let exp_eye =
-  "exp id = diag(e,e)" := exp eye =? diag (vec2' @@ scalar const_e)
+  "exp id = diag(e,e)" := exp eye2 =? diag (vec2' @@ scalar const_e)
 
 let sym = mat2 (vec2 0. 1.) (vec2 1. 0.)
 
 let t = "( 1 2; 3 4) (0 1; 1 0)" :=
     mat2 (vec2 1. 2.) (vec2 3. 4.) * sym
     =? mat2 (vec2 2. 1.) (vec2 4. 3.)
-let sym = "sym is an involution" := eye / sym =? sym
+let sym = "sym is an involution" := eye2 / sym =? sym
 
 let mxy = mat3 (vec3 (-1.) 0. 0.) (vec3 0. (-1.) 0.) (vec3 0. 0. 1.)
 let mid =
@@ -117,22 +91,8 @@ let mid =
 
 ;;
 
-module Random = struct
-;; Random.self_init ()
-let u () = Random.float 1.
-  let (<*>) f x () = f (x ())
-  let (<$>) f x () = f()(x())
-  let scalar = scalar <*> u
-  let vec2 = vec2 <*> u <$> u
-  let vec3 = vec3 <*> u <$> u <$> u
-  let vec4 = vec4 <*> u <$> u <$> u <$> u
-  let mat2 = mat2 <*> vec2 <$> vec2
-  let mat3 = mat3 <*> vec3 <$> vec3 <$> vec3
-  let mat4 = mat4 <*> vec4 <$> vec4 <$> vec4 <$> vec4
-end
-
 let linear =
-  let open Random in
+  let open Alea in
   let s =scalar () in
   let v = vec4 () in
   let w = vec4 () in
@@ -141,7 +101,7 @@ let linear =
     s * (( u + v ) + w) =? s * u + (s * v + s * w)
 
 let mat_distribution =
-  let open Random in
+  let open Alea in
   let s = scalar () in
   let m = mat4 () in
   let n = mat4 () in
@@ -150,15 +110,46 @@ let mat_distribution =
   "s * (m + n) * (u + v) = s m u + s m v + s n u + s n v" :=
     s*(m+n)*(u+v) =? s * m * u + s * m * v + s * n * u + s * n * v
 
+let vec_mat =
+  let m,n = Alea.(mat4 (),mat4 ()) in
+  let s, t = Alea.(scalar (), scalar ()) in
+  let v, w = Alea.(vec4 (), vec4 ()) in
+  "v M" := (v + s * w) * (m + t * n) =?
+           v * m + t * v * n
+           + s * w * m + s * t * w * n
+
 let rand =
-  let m1 = Random.mat3 () in
-  let m2 = Random.mat3 () in
+  let m1 = Alea.mat3 () in
+  let m2 = Alea.mat3 () in
   let m3 = m1 * m2  in
   "rm1 * rm2 / rm2 - m1 " := m3 / m2  =? m1
 (*
 let error = cross (vec4 0. 0. 0. 1.) (vec4 0. 1. 0. 0.)
 let error' = cross (scalar 1.) (scalar 2.)
 *)
+
+
+let vec_div0 =
+  let m = diag (vec4 1. 2. 3. 4.) in
+  let v = vec4 5. 7. 11. 13. in
+  " v M / M, 1)" := (v * m) / m =? v
+
+let vec_div1 =
+  let m = (eye d4).%[y'&x'&w'&z'] in
+  let v = vec4 5. 7. 11. 13. in
+  " v M / M, 2)" := (v * m) / m =? v
+
+
+let vec_div2 =
+  let m = mat2 (vec2 1. 0.) (vec2 1. 1.) in
+  let v = vec2 31. 37. in
+  " v M / M, 3)" := (v * m) / m =? v
+
+let vec_div =
+  let m = Alea.mat4 () in
+  let v = Alea.vec4 () in
+  let vm = v * m in
+  "v M / M = v, 4)" := vm / m =? v
 
 module X :sig val t: _ scalar end = struct
 let fn v w =
@@ -181,32 +172,13 @@ end
 
 
 let trace =
-  let a, b ,c = Random.( mat4(), mat4(), mat4 ()) in
+  let a, b ,c = Alea.( mat4(), mat4(), mat4 ()) in
   "trace (ABC) = trace(BCA) " :=
     scalar (trace (a * b * c)) =? scalar ( trace (b * c * a) )
 
 
 let anticommutator =
-  let a, b ,c = Random.( mat4(), mat4(), mat4 ()) in
+  let a, b ,c = Alea.( mat4(), mat4(), mat4 ()) in
   let ( ^ ) = anticommutator in
   "[A,[B,C]] + [B,[C,A]] + [C, [A,B]] = 0 " :=
     (a^(b^c)) + (b^(c^a)) =? ((a^b)^c)
-
-;;
-#if OCAML_MAJOR>=4 && OCAML_MINOR>=6
-let f = "v_x" :=  v.%[x'] =? scalar 0.
-let ryy = "r_yy" := r.%[yy'] =? scalar (sqrt 3. /. 2.)
-let rx = "r_x" := r.%[x'] =? vec3 (sqrt 3. /. 2.) 0.5 0.
-
-let sel = w'&z'&y'&x'
-let sw = "v4_3210" := v4 .%[sel] =? vec4 3. 2. 1. 0.
-
-let msw = "Id[1,0] = xy-sym" := eye.%[y'&x'] =? sym
-
-let diag = "Id(xx,xy,yy)" := eye.%[xx'&xy'&yy'] =? vec3 1. 0. 1.
-#endif
-
-;; if !failure then
-  Format.printf "\x1b[91m⛅⛅⛅⛅⛅⛅⛅⛅⛅FAILURE⛅⛅⛅⛅⛅⛅⛅⛅⛅\x1b[97m@."
-else Format.printf
-    "\x1b[33m☼☼☼☼☼☼☼☼☼☼☼☼☼☼☼☼\x1b[92mSuccess\x1b[33m☼☼☼☼☼☼☼☼☼☼☼☼☼☼☼☼\x1b[97m@."

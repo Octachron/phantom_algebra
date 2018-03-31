@@ -249,7 +249,7 @@ module type Core = sig
   val vec4: k -> k -> k -> k -> _ vec4
 
   (** [vec$n' v] extends a vector of dimension [d <= n]
-      to a vector of dimension v by repeting the last value
+      to a vector of dimension n by repeating the last value
       of the vector *)
   val vec2': ([< _ one | _ two], [< _ one | _ z] ) t -> _ vec2
   val vec3': ([< _ one | _ two| _ three] , [< _ one | _ z] ) t -> _ vec3
@@ -274,15 +274,15 @@ module type Core = sig
   (** [x <+> y] is the standard vector sum, without broadcasting *)
   val (<+>): ('dim,'rank) t -> ('dim,'rank) t -> ('dim,'rank) t
 
-  (** [~-x] is the standard addition inversesum *)
+  (** [~-x] is the standard addition inverse *)
   val (~-): ('dim,'rank) t -> ('dim,'rank) t
 
 
-  (** [+x] lift literal to scalar *)
+  (** [+x] lifts literal to scalar *)
   val (~+): k -> _ scalar
 
-  (** [x - y] is the standard vector difference, except for scalar argument
-      which are broadcasted to a constant tensor *)
+  (** [x - y] is the standard vector difference, except for scalar
+      argument which are broadcasted to a constant tensor *)
   val (-): ('a,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t
     -> ('a,'rank2) t -> ('a,'rank3) t
 
@@ -300,7 +300,8 @@ module type Core = sig
 
   (** [ x / y] is:
       - the external product if x or y is a scalar
-      - the matrix division if x and y are a matrix
+      - the matrix division if y is a matrix and x is either a matrix
+        or a vector
       - the element-wise division if both x and y are a vector
   *)
   val ( / ) : ('dim1, ('rank1, 'rank2, 'rank3,'dim1,'dim2,'dim3, _ ) div) t

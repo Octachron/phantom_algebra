@@ -36,7 +36,9 @@ type ('a, 'b,'c,'dim1,'dim2,'dim3, 'parameters) div =
              [< `zero of 'c * 'dim3  & 'p1 z * 'p2 one]
   | `one of 'b &
             [< `zero of 'c * 'dim3 & 'p1 one * 'dim1
-            | `one of 'c * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1]
+            | `one of 'c * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1
+            | `two of 'c * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1
+            ]
   | `two of 'b &
             [< `zero of 'c * 'dim3 & 'p1 two * 'dim1
             | `two of 'c * 'dim2 * 'dim3 & 'p2 two * 'dim1 * 'dim1

@@ -194,8 +194,19 @@ let pp ppf a = match rank a with
 
 (* ( A / B) B = A *)
 let mat_div x y =
-  let dim = mat_dim x in
+  let dim = mat_dim y in
   let left = A.copy y and right = A.copy x in
+  let dim_x = if rank x = Vector then begin
+      for i = 0 to dim - 1 do
+        let i' = i * dim in
+        for j = 0 to i - 1 do
+          let j' = j * dim in
+          let tmp = left#.(i' + j) in
+          A.set left ( i' + j ) left#.(i + j');
+          A.set left ( i + j' ) tmp
+        done
+      done; 1 end
+    else dim in
   let perm = Array.init dim (fun n -> n) in
   let switch i j =
     let tmp = perm.(i) in
@@ -216,9 +227,8 @@ let mat_div x y =
       let i = dim * i in
       let il = i + l' and ik = i + k' in
       A.set left il @@ left#.(il) +.  coeff *. left#.(ik);
-      A.set right il @@ right#.(il) +.  coeff *. right#.(ik);
     done;
-    for i = 0 to k-1 do
+    for i = 0 to dim_x - 1 do
       let i = dim * i in
       let il = i + l' and ik = i + k' in
       A.set right il @@ right#.(il) +.  coeff *. right#.(ik);
@@ -243,22 +253,22 @@ let mat_div x y =
     if x <> 0. then
       for j = 0 to i-1 do
       let coeff = -. left#.(i' + perm.(j)) /. x in
-      col_transf coeff i j
+      col_transf coeff i j;
     done
   done;
-  for i = 0 to dim - 1 do
+  for i = 0 to dim_x - 1 do
     for j = 0 to dim - 1 do
       let j' = perm.(j) in
       let ij = i * dim + j' in
       let x = left#.(j * dim + j') in
       if x <> 0. then
         A.set right ij @@ right#.(ij) /. x
-      done;
+    done;
   done;
-  let data = left in
-  for j = 0 to dim -1 do
+  let data = if dim_x = 1 then A.create dim else left in
+  for j = 0 to dim - 1 do
     let j' = perm.(j) in
-    for i = 0 to dim - 1 do
+    for i = 0 to dim_x - 1 do
       let i = dim * i in
       A.set data (i + j) @@ right#.(i + j');
     done
@@ -473,6 +483,7 @@ let ( * ) a b = match rank a, rank b with
 let ( / ) a b =
   match rank a, rank b with
   | Vector, Vector -> map2 (/.) a b
+  | Vector, Matrix -> mat_div a b
   | Matrix, Matrix ->
     mat_div a b
   | _ -> smap (fun x y -> y /. x ) b a
