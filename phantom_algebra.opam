@@ -16,7 +16,9 @@ build-doc:[
   [ "jbuilder" "build" "-p" name "-j" jobs "@doc" ]
 ]
 
+available: [ ocaml-version >= "4.02.3"
 
 depends: [
   "jbuilder" {build}
+  "cppo" {build}
   ]

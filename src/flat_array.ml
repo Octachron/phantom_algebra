@@ -15,6 +15,9 @@ type t = elt array
 let len = Array.length
 let get = Array.unsafe_get
 let set = Array.unsafe_set
-
+#if OCAML_MAJOR>=4 && OCAML_MINOR>=3
 let create = Array.create_float
+#else
+  let create n = Array.make n 0.
+#endif
 #endif
