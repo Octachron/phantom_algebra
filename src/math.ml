@@ -1,12 +1,14 @@
-open Core
+let map = Core.map
+let map2 = Core.map2
+
 let cos x = map cos x
 let sin x = map sin x
 let tan x = map tan x
 let acos x = map acos x
 let asin x = map asin x
 let atan x = map atan x
-let cosh x = map (fun x -> x /. 2.) (exp x <+> exp(~-x))
-let sinh x =  map (fun x -> x /. 2.) (exp x <-> exp(~-x))
+let cosh x = map (fun x -> (exp x +. exp (~-.x)) /. 2.) x
+let sinh x = map (fun x -> (exp x -. exp (~-.x)) /. 2.) x
 let tanh x = map tanh x
 
 let copysign x y = map2 copysign x y
