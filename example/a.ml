@@ -1,4 +1,3 @@
-
 let const_e = exp 1.
 
 open Phantom_algebra.Core
@@ -133,12 +132,6 @@ let vec_div0 =
   let m = diag (vec4 1. 2. 3. 4.) in
   let v = vec4 5. 7. 11. 13. in
   " v M / M, 1)" := (v * m) / m =? v
-
-let vec_div1 =
-  let m = (eye d4).%[y'&x'&w'&z'] in
-  let v = vec4 5. 7. 11. 13. in
-  " v M / M, 2)" := (v * m) / m =? v
-
 
 let vec_div2 =
   let m = mat2 (vec2 1. 0.) (vec2 1. 1.) in
