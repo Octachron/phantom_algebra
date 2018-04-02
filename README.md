@@ -1,7 +1,8 @@
 Phantom-algebra is a pure OCaml library implementing strongly-typed
 small tensors with dimensions 0 ≤ 4, rank ≤ 2, and limited to square matrices.
 
-It enables to manipulate vector expression with an uniform notation:
+It makes it possible to manipulate vector and matrix expressions with an
+uniform notation:
 
 ```OCaml
     open Phantom_algebra.Core
@@ -22,7 +23,7 @@ v + rot
 >  [< `one of … | `zero of … ] as 'c ``
 
 Type errors tend to be quite long to say the least, but individual type
-of scalar, vector and matrix are much simpler. However, the size of the
+of scalars, vectors and matrices are much simpler. However, the size of the
 type of higher order function may increase exponentially due to the exotic
 type construction used internally.
 

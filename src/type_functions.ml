@@ -4,8 +4,10 @@
     for the first (second, third and …) time
 *)
 
-type 'a one = [`one of 'a]
+(** {2 Small integer type representation } *)
+
 type 'a z = [`zero of 'a]
+type 'a one = [`one of 'a]
 type 'a two = [`two of 'a]
 type 'a three = [`three of 'a]
 type 'a four = [`four of 'a]
@@ -13,65 +15,87 @@ type 'a four = [`four of 'a]
 type ('a,'b,'c) any =
   [< `zero of 'b & 'a | `one of 'b & 'a | `two of 'b & 'a] as 'c
 
-type ('a, 'b,'c,'dim1,'dim2,'dim3, 'parameters) product =
-  [<`zero of 'b & (* scalar broadcasting *)
-             [< `zero of 'c * 'dim3 & 'p1 z * 'p2 one
-             | `one of 'c * 'dim3 & 'p1 one * 'dim2
-             | `two of 'c * 'dim3 & 'p1 two * 'dim2 ]
-  | `one of 'b &
-            [< `zero of 'c * 'dim3 & 'p1 one * 'dim2
-            | `one of 'c * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1
-            | `two of 'c * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1 ]
-  | `two of 'b &
-            [< `zero of 'c * 'dim3 & 'p1 two * 'dim2
-            | `one of 'c * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1
-            | `two of 'c * 'dim2 * 'dim3 & 'p1 two * 'dim1 * 'dim1 ]
-  ] as 'a
-  constraint 'parameters = 'p1 * 'p2 * 'p3
-(** (x,y,z,_ ) product computes the rank of x * y and
-    put the result inside z *)
+(** {2 Type-level functions} *)
 
-type ('a, 'b,'c,'dim1,'dim2,'dim3, 'parameters) div =
-  [<`zero of 'b & (* scalar broadcasting *)
-             [< `zero of 'c * 'dim3  & 'p1 z * 'p2 one]
-  | `one of 'b &
-            [< `zero of 'c * 'dim3 & 'p1 one * 'dim1
-            | `one of 'c * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1
-            | `two of 'c * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1
+(**
+    [(x,y,z,d1,d2,d3_ ) product] computes the types of (x,d1) * (y,d2= and
+    put the result inside z and d3.
+    In practice, the aims is to direct the unification of the type variables
+    using the type values of the inputs.
+    For the product we have the following types
+    [(''dim1, 'rank1) t -> ('dim2,'rank2) t -> ('dim3, 'rank3) t ]
+    and we want to unify ['rank3] and ['dim3] with the right values
+*)
+type ('rank1, 'rank2,'rank3,'dim1,'dim2,'dim3, 'parameters) product =
+  [<`zero of 'rank2 & (* if rank1 is zero: scalar broadcasting *)
+             [< `zero of 'rank3 * 'dim3 & 'p1 z * 'p2 one
+             (* scalar * scalar ⇒ scalar *)
+             | `one of 'rank3 * 'dim3 & 'p1 one * 'dim2
+             (* scalar * vector('dim) ⇒ vector('dim) *)
+             | `two of 'rank3 * 'dim3 & 'p1 two * 'dim2
+             (* scalar * matrix('dim) ⇒ matrix('dim) *)
+             ]
+  | `one of 'rank2 &
+            [< `zero of 'rank3 * 'dim3 & 'p1 one * 'dim2
+            (* vector('dim) * scalar ⇒ vector('dim) *)
+            | `one of 'rank3 * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1
+            (* vector('dim) * vector('dim) ⇒ vector('dim) *)
+            | `two of 'rank3 * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1
+            (* vector('dim) * matrix('dim) ⇒ vector('dim) *)
             ]
-  | `two of 'b &
-            [< `zero of 'c * 'dim3 & 'p1 two * 'dim1
-            | `two of 'c * 'dim2 * 'dim3 & 'p2 two * 'dim1 * 'dim1
+  | `two of 'rank2 &
+            [< `zero of 'rank3 * 'dim3 & 'p1 two * 'dim2
+            (* matrix('dim) * scalar⇒ matrix('dim) *)
+            | `one of 'rank3 * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1
+            (* matrix('dim) * vector('dim)⇒ vector('dim) *)
+            | `two of 'rank3 * 'dim2 * 'dim3 & 'p1 two * 'dim1 * 'dim1
+              (* matrix('dim) * matrix('dim)⇒ matrix('dim) *)
             ]
-  ] as 'a
+  ] as 'rank1
+  constraint 'parameters = 'p1 * 'p2 * 'p3
+
+
+type ('rank1, 'rank2,'rank3,'dim1,'dim2,'dim3, 'parameters) div =
+  [<`zero of 'rank2 & (* scalar broadcasting *)
+             [< `zero of 'rank3 * 'dim3  & 'p1 z * 'p2 one]
+  | `one of 'rank2 &
+            [< `zero of 'rank3 * 'dim3 & 'p1 one * 'dim1
+            | `one of 'rank3 * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1
+            | `two of 'rank3 * 'dim2 * 'dim3 & 'p1 one * 'dim1 * 'dim1
+            ]
+  | `two of 'rank2 &
+            [< `zero of 'rank3 * 'dim3 & 'p1 two * 'dim1
+            | `two of 'rank3 * 'dim2 * 'dim3 & 'p2 two * 'dim1 * 'dim1
+            ]
+  ] as 'rank1
   constraint 'parameters = 'p1 * 'p2 * 'p3
 (** (x,y,z,_ ) div computes the rank of x * y and
     put the result inside z *)
 
-type ('a, 'b,'c, 'parameters) rank_diff =
+type ('rank1, 'rank2,'rank3, 'parameters) rank_diff =
   [<
-    | `one of 'b & [< `one of 'c & 'p1 z]
-    | `two of 'b &
-              [< `one of 'c & 'p1 one
-              | `two of 'c & 'p1 z ]
-  ] as 'a
+    | `one of 'rank2 & [< `one of 'rank3 & 'p1 z]
+    | `two of 'rank2 &
+              [< `one of 'rank3 & 'p1 one
+              | `two of 'rank3 & 'p1 z ]
+  ] as 'rank1
   constraint 'parameters = 'p1
 (** (x,y,z,_ ) diff computes the rank of x - y and
     put the result inside z *)
 
 
-type ('a, 'b,'c,'dim1,'dim2,'dim3, 'parameters) sum =
-  [<`zero of 'b & (* scalar broadcasting *)
-             [< `zero of 'c * 'dim3 & 'p1 z * 'p2 one
-             | `one of 'c * 'dim3 & 'p1 one * 'dim2
-             | `two of 'c * 'dim3 & 'p1 two * 'dim2]
-  | `one of 'b &
-            [< `zero of 'c * 'dim3 & 'p1 one * 'dim1
-            | `one of 'c * 'dim1 * 'dim3 & 'p1 one * 'dim2 * 'dim2 ]
-  | `two of 'b &
-            [< `zero of 'c * 'dim3 & 'p1 two * 'dim1
-            | `two of 'c * 'dim1 * 'dim3 & 'p1 two * 'dim1 * 'dim3 ]
-  ] as 'a
+type ('rank1, 'rank2,'rank3,'dim1,'dim2,'dim3, 'parameters) sum =
+  [<`zero of 'rank2 & (* scalar broadcasting *)
+             [< `zero of 'rank3 * 'dim3 & 'p1 z * 'p2 one
+             | `one of 'rank3 * 'dim3 & 'p1 one * 'dim2
+             | `two of 'rank3 * 'dim3 & 'p1 two * 'dim2]
+  | `one of 'rank2 &
+            [< `zero of 'rank3 * 'dim3 & 'p1 one * 'dim1
+            | `one of 'rank3 * 'dim1 * 'dim3 & 'p1 one * 'dim2 * 'dim2 ]
+  | `two of 'rank2 &
+            [< `zero of 'rank3 * 'dim3 & 'p1 two * 'dim1
+            | `two of 'rank3 * 'dim1 * 'dim3 & 'p1 two * 'dim1 * 'dim3 ]
+  ] as 'rank1
   constraint 'parameters = 'p1 * 'p2 * 'p3
 (** (x,y,z,_ ) sum computes the rank of x + y and
     put the result inside z *)

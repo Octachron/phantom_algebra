@@ -1,4 +1,12 @@
-(** Phantom algebra interfaces *)
+(** Phantom algebra interfaces
+
+    This modules provides the interface implemented by the core
+    module, splits in smaller logical units.
+
+    There are intended to be used by people interested by the
+    type-level interface but not by the simple OCaml implementation provided.
+
+*)
 
 open Type_functions
 type k = float
@@ -33,91 +41,150 @@ module type Dim = sig
   val dim_to_int: _ dim -> int
 end
 
-module type Matching = sig
-  type +'a dim
-  type +'a rank
 
-  val rank_match:
-    [< `zero of 'a & 'r | `one of 'b & 'r | `two of 'c & 'r ] rank
-    -> ( _   z rank   -> 'a )
-    -> ( _ one rank -> 'b )
-    -> ( _ two rank -> 'c )
-    -> 'r
-
-  val dim_match:
-    [< `one of 'a & 'r | `two of 'b & 'r | `three of 'c & 'r
-    | `four of 'd & 'r ] dim
-    -> ( _   one dim -> 'a )
-    -> ( _   two dim -> 'b )
-    -> ( _ three dim -> 'c )
-    -> ( _  four dim -> 'd )
-    -> 'r
-end
-
-module type Cloning = sig
+module type Core = sig
+  (** Tensor type *)
   type (+'dim,+'rank) t
-  val clone_2:
-    (
-      [< `one   of ('dim1 * 'dim2 as 't)
-                    & _ one   * _ one
-    |  `two   of 't & _ two   * _ two
-    |  `three of 't & _ three * _ three
-    |  `four  of 't & _ four  * _ four
-    ],
-    [< `zero of ('rank1 * 'rank2 as 'r)
-                 & _ z   * _ z
-    | `one of 'r & _ one * _ one
-    | `two of 'r & _ two * _ two
-    ]) t -> ('dim1,'rank1) t * ('dim2,'rank2) t
 
-  val clone_3:
-    (
-      [< `one   of ('dim1 * 'dim2 * 'dim3 as 't)
-                    & _ one   * _ one   * _ one
-    |  `two   of 't & _ two   * _ two   * _ two
-    |  `three of 't & _ three * _ three * _ three
-    |  `four  of 't & _ four  * _ four  * _ four
-    ],
-    [< `zero of ('rank1 * 'rank2 * 'rank3 as 'r)
-                 & _ z   * _ z   * _ z
-    | `one of 'r & _ one * _ one * _ one
-    | `two of 'r & _ two * _ two * _ two
-    ]) t -> ('dim1,'rank1) t * ('dim2,'rank2) t * ('dim3,'rank3) t
+  val pp: Format.formatter -> ('dim,'rank) t -> unit
+  type +'x scalar = ('a one, 'b z) t constraint 'x = 'a * 'b
 
-  val clone_7:
-    (
-      [< `one of
-           ('dim1 * 'dim2 * 'dim3 * 'dim4 * 'dim5 * 'dim6 * 'dim7 as 'd)
-              & _ one   * _ one   * _ one  * _ one  * _ one  * _ one  * _ one
-      |  `two of
-              'd
-              & _ two   * _ two   * _ two  * _ two  * _ two  * _ two  * _ two
-      |`three of
-              'd
-              & _ three * _ three * _ three* _ three* _ three* _ three* _ three
-      | `four of
-              'd
-              & _ four  * _ four  * _ four * _ four * _ four * _ four * _ four
-      ],
-      [< `zero of
-           ('rank1 * 'rank2 * 'rank3 * 'rank4 * 'rank5 * 'rank6 * 'rank7 as 'r)
-           & _ z   * _ z   * _ z  * _ z   * _ z   * _ z   * _ z
-      | `one of
-           'r
-           & _ one * _ one * _ one* _ one * _ one * _ one * _ one
-      | `two of 'r
-                & _ two * _ two * _ two* _ two * _ two * _ two * _ two
-      ]) t ->
-        ('dim1,'rank1) t
-      * ('dim2,'rank2) t
-      * ('dim3,'rank3) t
-      * ('dim4,'rank4) t
-      * ('dim5,'rank5) t
-      * ('dim6,'rank6) t
-      * ('dim7,'rank7) t
+  type +'x vec2 = ('a two,'b one) t constraint 'x = 'a * 'b
+  type +'x vec3 = ('a three,'b one) t constraint 'x = 'a * 'b
+  type +'x vec4 = ('a four,'b one) t constraint 'x = 'a * 'b
+
+  type +'x mat2 = ('a two,'b two) t constraint 'x = 'a * 'b
+  type +'x mat3 = ('a three,'b two) t constraint 'x = 'a * 'b
+  type +'x mat4 = ('a four,'b two) t constraint 'x = 'a * 'b
+
+  val scalar: k -> _ scalar
+
+  val vec2: k -> k -> _ vec2
+  val vec3: k -> k -> k -> _ vec3
+  val vec4: k -> k -> k -> k -> _ vec4
+
+  (** [vec$n' v] extends a vector of dimension [d <= n]
+      to a vector of dimension n by repeating the last value
+      of the vector *)
+  val vec2': ([< _ one | _ two], [< _ one | _ z] ) t -> _ vec2
+  val vec3': ([< _ one | _ two| _ three] , [< _ one | _ z] ) t -> _ vec3
+  val vec4':
+    ([< _ one | _ two| _ three | _ four ] , [< _ one | _ z] ) t -> _ vec4
+
+  val mat2: _ vec2 -> _ vec2 -> _ mat2
+  val mat3: _ vec3 -> _ vec3 -> _ vec3 -> _ mat3
+  val mat4: _ vec4 -> _ vec4 -> _ vec4 -> _ vec4 -> _ mat4
+
+
+  val map: (k -> k ) -> ('dim,'rank) t -> ('dim,'rank) t
+  val map2: (k -> k -> k ) -> ('dim,'rank) t -> ('dim,'rank) t -> ('dim,'rank) t
+
+
+  (** [x + y] is the standard vector sum, except for scalar argument
+      which are broadcasted to a constant tensor *)
+  val (+): ('dim1,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t
+    -> ('dim2,'rank2) t -> ('dim3,'rank3) t
+
+
+  (** [x <+> y] is the standard vector sum, without broadcasting *)
+  val (<+>): ('dim,'rank) t -> ('dim,'rank) t -> ('dim,'rank) t
+
+  (** [~-x] is the standard addition inverse *)
+  val (~-): ('dim,'rank) t -> ('dim,'rank) t
+
+
+  (** [+x] lifts literal to scalar *)
+  val (~+): k -> _ scalar
+
+  (** [x - y] is the standard vector difference, except for scalar
+      argument which are broadcasted to a constant tensor *)
+  val (-): ('a,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t
+    -> ('a,'rank2) t -> ('a,'rank3) t
+
+  (** [x <-> y] is the standard vector difference, without broadcasting *)
+  val (<->): ('dim,'rank) t -> ('dim,'rank) t -> ('dim,'rank) t
+
+  (** [ x * y] is:
+      - the external product if x or y is a scalar
+      - the matrix product if x or y is a matrix
+      - the element-wise (hadamard) product otherwise
+  *)
+  val ( * ) : ('dim1, ('rank1, 'rank2, 'rank3,'dim1,'dim2,'dim3, _ ) product) t
+    -> ('dim2, 'rank2) t ->
+    ('dim3,'rank3) t
+
+  (** [ x / y] is:
+      - the external product division if x or y is a scalar
+      - the right matrix division if y is a matrix and x is either a matrix
+        or a vector
+      - the element-wise division if both x and y are vectors
+  *)
+  val ( / ) : ('dim1, ('rank1, 'rank2, 'rank3,'dim1,'dim2,'dim3, _ ) div) t
+    -> ('dim2, 'rank2) t ->
+    ('dim3,'rank3) t
+
+  (** [exp m = 1 + m + m ** 2 / 2 + m **3 / 3! … ] *)
+  val exp: ('dim,'rank) t -> ('dim,'rank) t
+
+
+  (** [ t ** k] is [ t * … * t ] k-time *)
+  val ( ** ) : ('dim,'rank) t -> int -> ('dim,'rank) t
+
+  (** [ (x|*|y)] is the canonical scalar product
+  *)
+  val ( |*| ) : ('dim, 'rank) t -> ('dim,'rank) t -> k
+
+  (** [cross v w] is the cross product, it maps either two 3d vectors to
+      a 3d pseudo-vector, or two 2d vectors to a scalar *)
+  val cross:  ( ('dim, 'dim2 * 'rank2, _ ) cross , _ one) t ->
+    ('dim, _ one) t -> ('dim2, 'rank2) t
+
+  (** [norm x] is the canonical 2-norm of x *)
+  val norm:  ('dim, 'rank) t -> k
+
+  (** [normalize x] is [x / scalar (norm x)] *)
+  val normalize: ('dim,'rank) t -> ('dim,'rank) t
+
+  (** [distance x y] is [norm (x - y)] *)
+  val distance: ('dim,'rank) t -> ('dim,'rank) t -> k
+
+  (** [norm_1 x] is ∑ |x_i| *)
+  val norm_1:  ('dim, 'rank) t -> k
+
+  (** [norm_q q x] is (∑ |x_i|^q) ^ 1/q *)
+  val norm_q: float -> ('dim, 'rank) t -> k
+
+  (** See {!cross} for the 2d and 3d cross-product for vectors
+      [ v ^ w ] is the infinitesimal rotation matrix in the plane
+      generated by [v] and [w] with an amplitude [|v||w| sin θ ].
+      In other words the matrix representation of the 2-from [dv ^ dw] in
+      the corresponding graded algebra.
+  *)
+  val ( ^ ): ('dim, _ one) t -> ('dim, _ one ) t -> ('dim, _ two ) t
+
+
+  (** [commutator m n] is [m * n - n * m] *)
+  val commutator: ('dim, _ two) t -> ('dim, _ two) t -> ('dim, _ two) t
+
+  (** [anticommutator m n] is [m * n + n * m] *)
+  val anticommutator: ('dim, _ two) t -> ('dim, _ two) t -> ('dim, _ two) t
+
+  (** [trace m] is [∑_i m_ii] *)
+  val trace: ('dim, _ two) t -> k
+
+  (** Vector concatenation : [ v |+| w ] *)
+  val ( |+| ): (('dim1,'dim2,'dim3,_) nat_sum, [< _ one | _ z] ) t ->
+    ('dim2, [< _ one | _ z] ) t -> ('dim3, _ one) t
 
 end
 
+(** {1 Indexing }
+
+    The two following module types provide a definition for indices
+    and their associated type-level values and the indexing and
+    slicing functions.
+
+*)
 
 module type Index = sig
 (** Index data type *)
@@ -227,136 +294,6 @@ module type Index = sig
   val qq': ([ | _ four], _ one, _ two, [`stpq]) index
 end
 
-module type Core = sig
-  (** Tensor type *)
-  type (+'dim,+'rank) t
-
-  val pp: Format.formatter -> ('dim,'rank) t -> unit
-  type +'x scalar = ('a one, 'b z) t constraint 'x = 'a * 'b
-
-  type +'x vec2 = ('a two,'b one) t constraint 'x = 'a * 'b
-  type +'x vec3 = ('a three,'b one) t constraint 'x = 'a * 'b
-  type +'x vec4 = ('a four,'b one) t constraint 'x = 'a * 'b
-
-  type +'x mat2 = ('a two,'b two) t constraint 'x = 'a * 'b
-  type +'x mat3 = ('a three,'b two) t constraint 'x = 'a * 'b
-  type +'x mat4 = ('a four,'b two) t constraint 'x = 'a * 'b
-
-  val scalar: k -> _ scalar
-
-  val vec2: k -> k -> _ vec2
-  val vec3: k -> k -> k -> _ vec3
-  val vec4: k -> k -> k -> k -> _ vec4
-
-  (** [vec$n' v] extends a vector of dimension [d <= n]
-      to a vector of dimension n by repeating the last value
-      of the vector *)
-  val vec2': ([< _ one | _ two], [< _ one | _ z] ) t -> _ vec2
-  val vec3': ([< _ one | _ two| _ three] , [< _ one | _ z] ) t -> _ vec3
-  val vec4':
-    ([< _ one | _ two| _ three | _ four ] , [< _ one | _ z] ) t -> _ vec4
-
-  val mat2: _ vec2 -> _ vec2 -> _ mat2
-  val mat3: _ vec3 -> _ vec3 -> _ vec3 -> _ mat3
-  val mat4: _ vec4 -> _ vec4 -> _ vec4 -> _ vec4 -> _ mat4
-
-
-  val map: (k -> k ) -> ('dim,'rank) t -> ('dim,'rank) t
-  val map2: (k -> k -> k ) -> ('dim,'rank) t -> ('dim,'rank) t -> ('dim,'rank) t
-
-
-  (** [x + y] is the standard vector sum, except for scalar argument
-      which are broadcasted to a constant tensor *)
-  val (+): ('dim1,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t
-    -> ('dim2,'rank2) t -> ('dim3,'rank3) t
-
-
-  (** [x <+> y] is the standard vector sum, without broadcasting *)
-  val (<+>): ('dim,'rank) t -> ('dim,'rank) t -> ('dim,'rank) t
-
-  (** [~-x] is the standard addition inverse *)
-  val (~-): ('dim,'rank) t -> ('dim,'rank) t
-
-
-  (** [+x] lifts literal to scalar *)
-  val (~+): k -> _ scalar
-
-  (** [x - y] is the standard vector difference, except for scalar
-      argument which are broadcasted to a constant tensor *)
-  val (-): ('a,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t
-    -> ('a,'rank2) t -> ('a,'rank3) t
-
-  (** [x <-> y] is the standard vector difference, without broadcasting *)
-  val (<->): ('dim,'rank) t -> ('dim,'rank) t -> ('dim,'rank) t
-
-  (** [ x * y] is:
-      - the external product if x or y is a scalar
-      - the matrix product if x or y is a matrix
-      - the element-wise (hadamard) product otherwise
-  *)
-  val ( * ) : ('dim1, ('rank1, 'rank2, 'rank3,'dim1,'dim2,'dim3, _ ) product) t
-    -> ('dim2, 'rank2) t ->
-    ('dim3,'rank3) t
-
-  (** [ x / y] is:
-      - the external product if x or y is a scalar
-      - the matrix division if y is a matrix and x is either a matrix
-        or a vector
-      - the element-wise division if both x and y are a vector
-  *)
-  val ( / ) : ('dim1, ('rank1, 'rank2, 'rank3,'dim1,'dim2,'dim3, _ ) div) t
-    -> ('dim2, 'rank2) t ->
-    ('dim3,'rank3) t
-
-  (** [exp m = 1 + m + m ** 2 / 2 + m **3 / 3! … ] *)
-  val exp: ('dim,'rank) t -> ('dim,'rank) t
-
-
-  (** [ t ** k] is [ t * … * t ] k-time *)
-  val ( ** ) : ('dim,'rank) t -> int -> ('dim,'rank) t
-
-  (** [ (x|*|y)] is the canonical scalar product
-  *)
-  val ( |*| ) : ('dim, 'rank) t -> ('dim,'rank) t -> k
-
-  (** [cross v w] maps either two 3d vectors to
-      a 3d pseudo-vector, or two 2d vectors to a scalar *)
-  val cross:  ( ('dim, 'dim2 * 'rank2, _ ) cross , _ one) t ->
-    ('dim, _ one) t -> ('dim2, 'rank2) t
-
-  (** [norm x] is the canonical norm of x *)
-  val norm:  ('dim, 'rank) t -> k
-  val distance: ('dim,'rank) t -> ('dim,'rank) t -> k
-
-  (** [norm_1 x] is ∑ |x_i| *)
-  val norm_1:  ('dim, 'rank) t -> k
-
-  (** [norm_q q x] is (∑ |x_i|^q) ^ 1/q *)
-  val norm_q: float -> ('dim, 'rank) t -> k
-
-  (** See {!cross} for the 2d and 3d cross-product for vectors
-      [ v ^ w ] is the infinitesimal rotation matrix in the plane
-      generated by [v] and [w] with an amplitude [|v||w| sin θ ].
-      In other words the matrix representation of the 2-from [dv ^ dw] in
-      the corresponding graded algebra.
-  *)
-  val ( ^ ): ('dim, _ one) t -> ('dim, _ one ) t -> ('dim, _ two ) t
-
-
-  (** [commutator m n] is [m * n - n * m] *)
-  val commutator: ('dim, _ two) t -> ('dim, _ two) t -> ('dim, _ two) t
-
-  (** [anticommutator m n] is [m * n + n * m] *)
-  val anticommutator: ('dim, _ two) t -> ('dim, _ two) t -> ('dim, _ two) t
-
-  (** [trace m] is [∑_i m_ii] *)
-  val trace: ('dim, _ two) t -> k
-
-  (** Vector concatenation : [ v |+| w ] *)
-  val ( |+| ): (('dim1,'dim2,'dim3,_) nat_sum, [< _ one | _ z] ) t ->
-    ('dim2, [< _ one | _ z] ) t -> ('dim3, _ one) t
-
-end
 
 module type Indexing = sig
 
@@ -383,12 +320,15 @@ module type Indexing = sig
   #endif
 end
 
-module type Builtin = sig
+module type Basic = sig
+  (** Some useful linear algebra values and functions *)
 
   type 'a dim
   type 'a rank
   type (+'a,+'b) tensor
 
+  (** [zero dim rank] is the zero scalar, vector or matrix
+      with dimension [dim] *)
   val zero: 'dim dim -> 'rank rank -> ('dim, 'rank) tensor
 
   (** [id rank dim] [t ** 0] for any tensor of corresponding rank
@@ -402,19 +342,127 @@ module type Builtin = sig
   (** [diag vec] is the diagonal matrix with [vec] on the diagonal *)
     val diag: ('dim, _ one) tensor -> ('dim, _ two) tensor
 
-  (** [normalize x] is [x / scalar (norm x)] *)
-  val normalize: ('dim,'rank) tensor -> ('dim,'rank) tensor
-
-  (** [orthonormalize [x_1;…;x_n] returns an orthonormal base [b_1;…;b_k]
-      of the vector space spanned by [x_1,…x_n].
-      In general [k ≤ n], and [k=n] iff the family [x_1,…,x_n] was free *)
-  val orthonormalize: ('dim,'rank) tensor list -> ('dim,'rank) tensor list
-
   (** [rotation x y θ] computes the rotation matrix in the plane
       spanned by x y with a θ angle. *)
   val rotation: ('dim,_ one) tensor -> ('dim,_ one) tensor -> k
     -> ('dim,_ two) tensor
 end
+
+
+(** {1 Advanced modules }
+    The following functions are useful when writing higher functions
+    of which the output depends on the dimension or the rank,
+    or with input of arbitrary dimensions or ranks.
+    Note that type errors often become atrocious in this use case
+ *)
+
+
+module type Matching = sig
+  (** Pattern matching over dimension or rank *)
+  type +'a dim
+  type +'a rank
+
+  val rank_match:
+    [< `zero of 'a & 'r | `one of 'b & 'r | `two of 'c & 'r ] rank
+    -> ( _   z rank   -> 'a )
+    -> ( _ one rank -> 'b )
+    -> ( _ two rank -> 'c )
+    -> 'r
+
+  val dim_match:
+    [< `one of 'a & 'r | `two of 'b & 'r | `three of 'c & 'r
+    | `four of 'd & 'r ] dim
+    -> ( _   one dim -> 'a )
+    -> ( _   two dim -> 'b )
+    -> ( _ three dim -> 'c )
+    -> ( _  four dim -> 'd )
+    -> 'r
+end
+
+module type Cloning = sig
+  (** Cloning a value is useful to duplicate the type-level information
+      associated to this value when this value is provided as an
+      function argument.
+      This useful when using multiple time this value with functions performing
+      different type-level computations.
+*)
+
+  type (+'dim,+'rank) t
+
+  (** [clone_2 v] returns two clones [x,y] of the value [v] with
+      the same types as the original type of [ v] *)
+  val clone_2:
+    (
+      [< `one   of ('dim1 * 'dim2 as 't)
+                    & _ one   * _ one
+    |  `two   of 't & _ two   * _ two
+    |  `three of 't & _ three * _ three
+    |  `four  of 't & _ four  * _ four
+    ],
+    [< `zero of ('rank1 * 'rank2 as 'r)
+                 & _ z   * _ z
+    | `one of 'r & _ one * _ one
+    | `two of 'r & _ two * _ two
+    ]) t -> ('dim1,'rank1) t * ('dim2,'rank2) t
+
+  (** [clone_k] are not strictly required, but they
+      are here to avoid the pattern
+      {[ let a, t = clone_2 t in
+         let b, t = clone_2 t in
+         …
+    ]} required by the sole use of [clone_2]
+  *)
+  val clone_3:
+    (
+      [< `one   of ('dim1 * 'dim2 * 'dim3 as 't)
+                    & _ one   * _ one   * _ one
+    |  `two   of 't & _ two   * _ two   * _ two
+    |  `three of 't & _ three * _ three * _ three
+    |  `four  of 't & _ four  * _ four  * _ four
+    ],
+    [< `zero of ('rank1 * 'rank2 * 'rank3 as 'r)
+                 & _ z   * _ z   * _ z
+    | `one of 'r & _ one * _ one * _ one
+    | `two of 'r & _ two * _ two * _ two
+    ]) t -> ('dim1,'rank1) t * ('dim2,'rank2) t * ('dim3,'rank3) t
+
+  val clone_7:
+    (
+      [< `one of
+           ('dim1 * 'dim2 * 'dim3 * 'dim4 * 'dim5 * 'dim6 * 'dim7 as 'd)
+              & _ one   * _ one   * _ one  * _ one  * _ one  * _ one  * _ one
+      |  `two of
+              'd
+              & _ two   * _ two   * _ two  * _ two  * _ two  * _ two  * _ two
+      |`three of
+              'd
+              & _ three * _ three * _ three* _ three* _ three* _ three* _ three
+      | `four of
+              'd
+              & _ four  * _ four  * _ four * _ four * _ four * _ four * _ four
+      ],
+      [< `zero of
+           ('rank1 * 'rank2 * 'rank3 * 'rank4 * 'rank5 * 'rank6 * 'rank7 as 'r)
+           & _ z   * _ z   * _ z  * _ z   * _ z   * _ z   * _ z
+      | `one of
+           'r
+           & _ one * _ one * _ one* _ one * _ one * _ one * _ one
+      | `two of 'r
+                & _ two * _ two * _ two* _ two * _ two * _ two * _ two
+      ]) t ->
+        ('dim1,'rank1) t
+      * ('dim2,'rank2) t
+      * ('dim3,'rank3) t
+      * ('dim4,'rank4) t
+      * ('dim5,'rank5) t
+      * ('dim6,'rank6) t
+      * ('dim7,'rank7) t
+
+end
+
+(** {1 Full interface}
+    The module type [S] combines all previous interface together.
+*)
 
 module type S = sig
   include Dim
@@ -424,7 +472,7 @@ module type S = sig
   include Indexing with
     type ('a,'b,'c,'d) index := ('a,'b,'c,'d) index
     and type ('a,'b) t := ('a,'b) t
-  include Builtin with
+  include Basic with
     type 'a dim := 'a dim and type 'a rank := 'a rank
     and type ('a,'b) tensor := ('a,'b) t
   include Matching with

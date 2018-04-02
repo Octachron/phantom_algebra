@@ -1,4 +1,7 @@
-(** Usual mathematical operations extended to tensors *)
+(** Usual mathematical operations extended to tensors
+
+    As general rules these functions operates element-wise.
+*)
 
 open Core
 
@@ -16,7 +19,6 @@ val atan: ('dim,'rank) t -> ('dim,'rank) t
 val cosh: ('dim,'rank) t -> ('dim,'rank) t
 val sinh: ('dim,'rank) t -> ('dim,'rank) t
 val tanh: ('dim,'rank) t -> ('dim,'rank) t
-
 val atanh: ('dim,'rank) t -> ('dim,'rank) t
 
 (** {1 Exponential and logarithm } *)
