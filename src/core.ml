@@ -80,25 +80,23 @@ let (&) x y =
   let nx = shift x in
   x + ((y land 0xFFFF) lsl nx) + y land dim_mask
 
-type (+'dim,+'rank) t = floatarray
+type (+'dim,+'rank) t = Flat_array.t
 
 module A = struct
-  let len = Array.Floatarray.length
-  let get = Array.Floatarray.unsafe_get
-  let set = Array.Floatarray.unsafe_set
 
+  include Flat_array
   let (#.) = get
   let iteri f x =
     for i = 0 to len x - 1 do
       f i x#.i
     done
 
+
   let copy x =
     let len = len x in
-    let a = Array.Floatarray.create len in
-      iteri (set a) x;
-      a
-  let create = Array.Floatarray.create
+    let a = create len in
+    iteri (set a) x;
+    a
   let make n x =
     let a = create n in
     iteri (fun i _ -> set a i x) a;
@@ -109,7 +107,7 @@ module A = struct
     Array.iteri (set a) x;
     a
 
-  let init n f = let a = Array.Floatarray.create n in
+  let init n f = let a = create n in
     for i = 0 to n - 1 do set a i (f i) done;
     a
 
