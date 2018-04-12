@@ -167,6 +167,7 @@ let mat_init dim f =
       incr pos
     done;
   done;
+  if dim = 2 then A.set a !pos 0.;
   a
 
 let pp ppf a = match rank a with
@@ -187,7 +188,7 @@ let pp ppf a = match rank a with
     Format.fprintf ppf " |@]" in
     Format.fprintf ppf "@[<v>";
       line 0;
-      for i = 1 to dim - 1 do Format.pp_print_cut ppf (); line i done;
+    for i = 1 to dim - 1 do Format.pp_print_cut ppf (); line i done;
     Format.fprintf ppf "@]"
 
 let lu dim col_transf m =
@@ -360,6 +361,7 @@ let mat2 a b =
   let m = A.create (mat_len 2) in
   A.set m 0 a#.0; A.set m 1 a#.1;
   A.set m 2 b#.0; A.set m 3 b#.1;
+  A.set m 4 0.;
   m
 
 
@@ -423,6 +425,7 @@ let slice (t: (_,_) t) (n:(_ index)) =
         done;
         pos := !pos lsr 4
       done;
+      if dim = 2 then A.set data 4 0.;
       data
 
 
@@ -486,8 +489,7 @@ let ( * ) a b = match rank a, rank b with
         s:= a#.(i * dim + k) *. b#.(k * dim + j) +. !s done;
       !s
     in
-    let data = A.init (A.len a)
-        (fun n -> sum (n / dim) (n mod dim)) in
+    let data = mat_init dim sum in
     data
 
 
