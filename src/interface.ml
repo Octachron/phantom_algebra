@@ -12,41 +12,19 @@ open Type_functions
 type k = float
 exception Unexpected_ranks of int list
 
-
-
-module type Rank = sig
-  (** Rank-related types *)
-
-  (** Tensor rank: scalar, vector or matrix *)
-  type +_ rank
-  val scalar: _ z rank
-  val vector: _ one rank
-  val matrix: _ two rank
-  val rank_to_int: _ rank -> int
-end
-
-
-
-module type Dim = sig
-  (** Dimension-related types *)
-
-  (** Dimension for vectors and matrix, 1d vectors are considered scalars *)
-  type +_ dim
-
-  val d1: _ one dim
-  val d2: _ two dim
-  val d3: _ three dim
-  val d4: _ four dim
-
-  val dim_to_int: _ dim -> int
-end
-
-
 module type Core = sig
-  (** Tensor type *)
-  type (+'dim,+'rank) t
 
+  type (+'dim,+'rank) t
+  (** Tensor core type:
+      - rank is either 2 (for matrix), 1 (for vector) or zero for scalars
+      - dim belongs to {1,2,3,4}.
+  *)
+
+  (** Printer function *)
   val pp: Format.formatter -> ('dim,'rank) t -> unit
+
+
+  (** {1 Type abreviations} *)
   type +'x scalar = ('a one, 'b z) t constraint 'x = 'a * 'b
 
   type +'x vec2 = ('a two,'b one) t constraint 'x = 'a * 'b
@@ -57,11 +35,23 @@ module type Core = sig
   type +'x mat3 = ('a three,'b two) t constraint 'x = 'a * 'b
   type +'x mat4 = ('a four,'b two) t constraint 'x = 'a * 'b
 
+  (** {1 Constructors} *)
   val scalar: k -> _ scalar
+  val (~+): k -> _ scalar
+  (** [scalar f] build a scalar from the naked scalar type.
+      It can be abbreviated to [(+s)].
+  *)
 
   val vec2: k -> k -> _ vec2
   val vec3: k -> k -> k -> _ vec3
   val vec4: k -> k -> k -> k -> _ vec4
+
+  val mat2: _ vec2 -> _ vec2 -> _ mat2
+  val mat3: _ vec3 -> _ vec3 -> _ vec3 -> _ mat3
+  val mat4: _ vec4 -> _ vec4 -> _ vec4 -> _ vec4 -> _ mat4
+
+
+  (** {1 Vector stretching and concatenation } *)
 
   (** [vec$n' v] extends a vector of dimension [d <= n]
       to a vector of dimension n by repeating the last value
@@ -71,15 +61,18 @@ module type Core = sig
   val vec4':
     ([< _ one | _ two| _ three | _ four ] , [< _ one | _ z] ) t -> _ vec4
 
-  val mat2: _ vec2 -> _ vec2 -> _ mat2
-  val mat3: _ vec3 -> _ vec3 -> _ vec3 -> _ mat3
-  val mat4: _ vec4 -> _ vec4 -> _ vec4 -> _ vec4 -> _ mat4
+  (** Vector concatenation :
+      [ v |+| w ] is [(v_0, v_1, … , v_{dim-1}, w_0, …, w_{dim-1})]*)
+  val ( |+| ): (('dim1,'dim2,'dim3,_) nat_sum, [< _ one | _ z] ) t ->
+    ('dim2, [< _ one | _ z] ) t -> ('dim3, _ one) t
 
+  (** {1 Map functions} *)
 
   val map: (k -> k ) -> ('dim,'rank) t -> ('dim,'rank) t
   val map2: (k -> k -> k ) -> ('dim,'rank) t -> ('dim,'rank) t -> ('dim,'rank) t
 
 
+  (** {2 Core linear algebra functions} *)
   (** [x + y] is the standard vector sum, except for scalar argument
       which are broadcasted to a constant tensor *)
   val (+): ('dim1,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t
@@ -91,10 +84,6 @@ module type Core = sig
 
   (** [~-x] is the standard addition inverse *)
   val (~-): ('dim,'rank) t -> ('dim,'rank) t
-
-
-  (** [+x] lifts literal to scalar *)
-  val (~+): k -> _ scalar
 
   (** [x - y] is the standard vector difference, except for scalar
       argument which are broadcasted to a constant tensor *)
@@ -123,27 +112,30 @@ module type Core = sig
     -> ('dim2, 'rank2) t ->
     ('dim3,'rank3) t
 
-  (** [exp m = 1 + m + m ** 2 / 2 + m **3 / 3! … ] *)
+  (** {2 Exponentiation functions } *)
+
+  (** [ t ** k] is [ t * … * t ] k-times *)
+  val ( ** ) : ('dim,'rank) t -> int -> ('dim,'rank) t
+
+  (** [exp] is the algebraic exponential:
+      [exp m = 1 + m + m ** 2 / 2 + m **3 / 3! + … ] *)
   val exp: ('dim,'rank) t -> ('dim,'rank) t
 
 
-  (** [ t ** k] is [ t * … * t ] k-time *)
-  val ( ** ) : ('dim,'rank) t -> int -> ('dim,'rank) t
-
-  (** [ (x|*|y)] is the canonical scalar product
-  *)
+  (** {2 Scalar products and norms *)
+    (** [ (x|*|y)] is the canonical scalar product *)
   val ( |*| ) : ('dim, 'rank) t -> ('dim,'rank) t -> k
-
-  (** [cross v w] is the cross product, it maps either two 3d vectors to
-      a 3d pseudo-vector, or two 2d vectors to a scalar *)
-  val cross:  ( ('dim, 'dim2 * 'rank2, _ ) cross , _ one) t ->
-    ('dim, _ one) t -> ('dim2, 'rank2) t
 
   (** [norm x] is the canonical 2-norm of x *)
   val norm:  ('dim, 'rank) t -> k
 
   (** [normalize x] is [x / scalar (norm x)] *)
   val normalize: ('dim,'rank) t -> ('dim,'rank) t
+
+  (** [orthonomalize [v_0;...;v_n]] returns a list of orthonormal vectors
+      [[w_0;...;w_k]] that spans the same vector subspace as [v_0;...;v_n].
+      If the family [[v_0;...;v_n]] was free then [k = n], otherwise [k<n]. *)
+  val orthonormalize: ('dim, _ one) t list -> ('dim, _ one) t list
 
   (** [distance x y] is [norm (x - y)] *)
   val distance: ('dim,'rank) t -> ('dim,'rank) t -> k
@@ -154,15 +146,22 @@ module type Core = sig
   (** [norm_q q x] is (∑ |x_i|^q) ^ 1/q *)
   val norm_q: float -> ('dim, 'rank) t -> k
 
+  (** {2 Cross and external product }*)
+
+  (** [cross v w] is the cross product, it maps either two 3d vectors to
+      a 3d pseudo-vector, or two 2d vectors to a scalar *)
+  val cross:  ( ('dim, 'dim2 * 'rank2, _ ) cross , _ one) t ->
+    ('dim, _ one) t -> ('dim2, 'rank2) t
+
   (** See {!cross} for the 2d and 3d cross-product for vectors
       [ v ^ w ] is the infinitesimal rotation matrix in the plane
       generated by [v] and [w] with an amplitude [|v||w| sin θ ].
-      In other words the matrix representation of the 2-from [dv ^ dw] in
+      In other words the matrix representation of the 2-form [dv ^ dw] in
       the corresponding graded algebra.
   *)
   val ( ^ ): ('dim, _ one) t -> ('dim, _ one ) t -> ('dim, _ two ) t
 
-
+  (** {2 More linear algebra functions } *)
   (** [commutator m n] is [m * n - n * m] *)
   val commutator: ('dim, _ two) t -> ('dim, _ two) t -> ('dim, _ two) t
 
@@ -171,10 +170,6 @@ module type Core = sig
 
   (** [trace m] is [∑_i m_ii] *)
   val trace: ('dim, _ two) t -> k
-
-  (** Vector concatenation : [ v |+| w ] *)
-  val ( |+| ): (('dim1,'dim2,'dim3,_) nat_sum, [< _ one | _ z] ) t ->
-    ('dim2, [< _ one | _ z] ) t -> ('dim3, _ one) t
 
 end
 
@@ -355,6 +350,34 @@ end
     or with input of arbitrary dimensions or ranks.
     Note that type errors often become atrocious in this use case
  *)
+
+
+module type Rank = sig
+  (** Rank-related types *)
+
+  (** Tensor rank: scalar, vector or matrix *)
+  type +_ rank
+  val scalar: _ z rank
+  val vector: _ one rank
+  val matrix: _ two rank
+  val rank_to_int: _ rank -> int
+end
+
+
+
+module type Dim = sig
+  (** Dimension-related types *)
+
+  (** Dimension for vectors and matrix, 1d vectors are considered scalars *)
+  type +_ dim
+
+  val d1: _ one dim
+  val d2: _ two dim
+  val d3: _ three dim
+  val d4: _ four dim
+
+  val dim_to_int: _ dim -> int
+end
 
 
 module type Matching = sig
