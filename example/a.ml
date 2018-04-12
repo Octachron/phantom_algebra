@@ -48,6 +48,20 @@ let r =
   "exp (π/6 (dx ^ dy)) = Rxy_(π/6)" :=
     exp ( scalar (pi /. 6.) * e1 ^ e2 ) =? r
 
+let rec ortho g () =
+  match orthonormalize [g (); g()] with
+    | [x;y] -> x, y
+    | _ -> ortho g ()
+
+let ext_prod_antisym =
+  let x, y = Alea.(vec4(), vec4 ()) in
+  " x ^ y =  (y ^ x)^T" := x ^ y =? transpose( y ^ x )
+
+let lie =
+    let x, y = ortho Alea.vec3 () in
+    let theta = Alea.u() in
+  "exp (θ (dx ^ dy)) = Rxy_θ" :=
+      exp( scalar theta * (x ^ y) ) =? rotation x y theta
 
 let e3 = "*(e1 ^ e2)=e3" := cross e1 e2 =? vec3 0. 0. 1.
 let f2 = "dx ^ dy" :=

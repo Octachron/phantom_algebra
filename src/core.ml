@@ -453,12 +453,12 @@ let cross a b =
 
 let ( ^ ) a b =
   let dim = A.len a in
-  let data = A.create (mat_len dim) in
+  let data = A.make (mat_len dim) 0. in
   for i = 0 to dim -1 do
-    for j = 0 to dim - 1 do
-      let r =  a#.(i) *. b#.(j) -. a#.(j) *. b#.(i) in
-      A.set data ( i * dim + j ) @@ data#.( i + dim + j) -. r;
-      A.set data ( j * dim + i ) @@ data#.( j + dim + i) +. r
+    for j = (i+1) to dim - 1 do
+      let r =  a#.(i) *. b#.(j) -. b#.(i) *. a#.(j) in
+      A.set data ( i * dim + j ) @@ data#.( i * dim + j) -. r;
+      A.set data ( j * dim + i ) @@ data#.( j * dim + i) +. r
     done
   done;
   data
@@ -650,7 +650,7 @@ let transpose m =
 let expm a =
   let b = pade_13 in
   let norm1 = norm_1 a in
-  let s = max 0 @@ snd @@ frexp (norm1 /. theta_13) in
+  let s = min 0 @@ snd @@ frexp (norm1 /. theta_13) in
   let a = map (fun f -> ldexp f s) a in
   let a0 = eye (dim a) in
   let a2 = a *a in let a4 = a2 * a2 in let a6 = a2 * a4 in
