@@ -202,6 +202,18 @@ let transpose_and_on =
   let r = rotation v w theta and r' = transpose (rotation v w (-.theta)) in
   "R∈O(n)" := r =? r'
 
+
+let rec ortho4 () =
+  let l = Alea.[vec4 (); vec4(); vec4 (); vec4 (); vec4 ()] in
+  match orthonormalize l with
+  | [a;b;c;d] -> mat4 a b c d
+  | _ -> ortho4 ()
+
+let group_orthogonal =
+  let m = ortho4 () in
+  " m ∈ O(n), m m^T = id " := m * transpose m =? eye d4
+
+
 let sym =
   let s = Alea.mat4 () in
   let s = (s <+> transpose s) / scalar 2. in
@@ -271,10 +283,6 @@ let scalar_product_is_linear =
   "(u + λ v ,w) = (u,w) + λ (v,w)" :=
     let u,v,w, s = Alea.(mat4(), mat4(), mat4(), u () ) in
     +(u +  scalar s * v|*|w) =? +((u|*|w) +. s *.  (v|*|w))
-
-
-
-;; Tools.set_epsilon 1e-6
 
 let exponential_addition =
   let m, a, b, c ,d, e, f = let open Alea in
