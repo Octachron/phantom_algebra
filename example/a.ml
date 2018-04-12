@@ -122,6 +122,10 @@ let vec_mat =
            v * m + t * v * n
            + s * w * m + s * t * w * n
 
+let vec_mat =
+  let m, v = Alea.(mat3() , vec3()) in
+  "v M = M^T v" := v * m =? transpose m * v
+
 let associativity =
   let m1, m2, m3 = Alea.(mat4 (), mat4 (), mat4 () ) in
   " M (N K) =  (M N) K" := m1 * (m2 * m3) =? (m1 * m2) * m3
@@ -235,3 +239,10 @@ let det_is_antisymmetric =
   a'.(i) <- a.(j); a'.(j) <- a.(i);
   let det a = +det (mat4 a.(0) a.(1) a.(2) a.(3)) in
   "det m = -det τ m" := det a =? (-det a')
+
+let det_is_multilinear =
+  let a = Alea.mat4 () + scalar 3. * eye d4 in
+  let v = Alea.vec4 () + vec4 3. 0. 0. 0. in
+  let x, y, z, w = slice a x', slice a y', slice a z', slice a w' in
+  "det (a+b,...) = det (a,...) + det (b,...)" :=
+  +det (mat4 (x+v) y z w) =? +det (mat4 x y z w) + +det (mat4 v y z w)
