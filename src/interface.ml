@@ -171,6 +171,12 @@ module type Core = sig
   (** [trace m] is [∑_i m_ii] *)
   val trace: ('dim, _ two) t -> k
 
+  (** [det m] is the signed volume of the convex hull of
+      of the matrix rows *)
+  val det: ('dim, _ two) t -> k
+
+  (** [transpose m] is the matrix with row and column reversed *)
+  val transpose: ('dim, _ two) t -> ('dim, _ two) t
 end
 
 (** {1 Indexing }

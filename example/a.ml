@@ -22,8 +22,8 @@ let v'' = "s * v" := s * v  =? vec2 0. 7.
 let v''' = "v' * ( 1 + v'')" := v' * ( scalar 1. + v'') =? vec2 7. 64.
 
 let xyrot theta = mat3
-    (vec3 (  cos theta) (sin theta) 0.)
-    (vec3 (-.sin theta) (cos theta) 0.)
+    (vec3 (  cos theta) (-.sin theta) 0.)
+    (vec3 (sin theta) (cos theta) 0.)
     (vec3        0.         0.      1.)
 
 
@@ -31,12 +31,17 @@ let pi = 4. *. atan 1.
 let r = "Rxy_(π/6)" :=
     xyrot (pi /.6.) =?
     let x = sqrt 3. /. 2. and y = 0.5 in
-    mat3 (vec3 x y 0.) (vec3 (-.y) x 0.) (vec3 0. 0. 1.)
+    mat3 (vec3 x ~-.y 0.) (vec3 y x 0.) (vec3 0. 0. 1.)
 let r' =
 "rotation x y (π/6)" :=
   rotation (vec3 1. 0. 0.) (vec3 0. 1. 0.) (pi /. 6.) =? r
 
 let e1 = vec3 1. 0. 0. |? "e1=(1 0 0)"
+let rot_pi2 = "R_(π/2)" :=
+    xyrot (pi /. 2.) =? mat3
+      (vec3 0. ~-.1. 0.)
+      (vec3 1. 0. 0.)
+      (vec3 0. 0. 1.)
 let e2 = "R_(π/2) e1 = e2" := xyrot (pi /. 2.) * e1 =? vec3 0. 1. 0.
 
 let r =
@@ -47,8 +52,8 @@ let r =
 let e3 = "*(e1 ^ e2)=e3" := cross e1 e2 =? vec3 0. 0. 1.
 let f2 = "dx ^ dy" :=
     e1 ^ e2 =? mat3
-      (vec3    0. 1. 0.)
-      (vec3 ~-.1. 0. 0.)
+      (vec3    0. ~-.1. 0.)
+      (vec3    1. 0. 0.)
       (vec3    0. 0. 0.)
 
 let m_one =
@@ -117,6 +122,20 @@ let vec_mat =
            v * m + t * v * n
            + s * w * m + s * t * w * n
 
+let associativity =
+  let m1, m2, m3 = Alea.(mat4 (), mat4 (), mat4 () ) in
+  " M (N K) =  (M N) K" := m1 * (m2 * m3) =? (m1 * m2) * m3
+
+
+let associativity_vec =
+  let m1, m2, v = Alea.(mat4 (), mat4 (), vec4 () ) in
+  " M (N v) =  (M N) v" := m1 * (m2 * v) =? (m1 * m2) * v
+
+let associativity_form =
+  let m1, m2, v = Alea.(mat4 (), mat4 (), vec4 () ) in
+  " v (M N) =  (v M) N" := v * (m1 * m2) =? (v * m1) * m2
+
+
 let rand =
   let m1 = Alea.mat3 () in
   let m2 = Alea.mat3 () in
@@ -143,6 +162,32 @@ let vec_div =
   let v = Alea.vec4 () in
   let vm = v * m in
   "v M / M = v, 4)" := vm / m =? v
+
+let rotation_are_so =
+  let s = 2. *. pi *. Alea.u () in
+  "R∈SO(n)" :=  +(det (xyrot s)) =? (scalar 1.)
+
+let det_isomorphism =
+  let m1, m2 = Alea.(mat4 (), mat4 () ) in
+  let eye4 = eye d4 in
+  let m1, m2 = m1 + eye4, m2 + eye4 (* avoid ill-conditioned matrices *)
+  in
+  "det(A B) = (det A) (det B)" :=  +det (m1 * m2) =? +(det m1 *. det m2)
+
+let transpose_is_contravariant =
+  let a, b = Alea.( mat4 (), mat4 () ) in
+  "(A B)^T = B^T * A^T" := transpose (a * b) =? transpose b * transpose a
+
+let transpose_and_on =
+  let v, w, theta = Alea.(vec4 (), vec4 (), u () ) in
+  let r = rotation v w theta and r' = transpose (rotation v w (-.theta)) in
+  "R∈O(n)" := r =? r'
+
+let sym =
+  let s = Alea.mat4 () in
+  let s = (s <+> transpose s) / scalar 2. in
+  let x, y = Alea.(vec4 (), vec4 ()) in
+  "⟨ x | M y ⟩ = ⟨ x M | y ⟩" := +(x |*| s * y) =? +(x * s |*| y)
 
 module X :sig val t: _ scalar end = struct
 let fn v w =
@@ -175,3 +220,18 @@ let anticommutator =
   let ( ^ ) = anticommutator in
   "[A,[B,C]] + [B,[C,A]] + [C, [A,B]] = 0 " :=
     (a^(b^c)) + (b^(c^a)) =? ((a^b)^c)
+
+
+let det_is_antisymmetric =
+  let a = [|Alea.vec4() + vec4 1. 0. 0. 0.;
+            Alea.vec4() + vec4 0. 1. 0. 0.;
+            Alea.vec4() + vec4 0. 0. 1. 0.;
+            Alea.vec4() + vec4 0. 0. 0. 1.|] in
+  let rec gen () =
+    let i, j = Random.int 4, Random.int 4 in
+    if i = j then gen () else i, j in
+  let i, j = gen () in
+  let a' = Array.copy a in
+  a'.(i) <- a.(j); a'.(j) <- a.(i);
+  let det a = +det (mat4 a.(0) a.(1) a.(2) a.(3)) in
+  "det m = -det τ m" := det a =? (-det a')
