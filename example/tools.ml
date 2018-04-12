@@ -2,7 +2,9 @@
 open Phantom_algebra.Core
 open Phantom_algebra.Type_functions
 
-let negligible x = x < 1e-12
+let epsilon = ref 1e-12
+let set_epsilon x = epsilon := x
+let negligible x = x < !epsilon
 
 
 let failure = ref false

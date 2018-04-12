@@ -1,4 +1,5 @@
 let const_e = exp 1.
+let fexp = exp
 
 open Phantom_algebra.Core
 open Phantom_algebra.Type_functions
@@ -270,3 +271,18 @@ let scalar_product_is_linear =
   "(u + λ v ,w) = (u,w) + λ (v,w)" :=
     let u,v,w, s = Alea.(mat4(), mat4(), mat4(), u () ) in
     +(u +  scalar s * v|*|w) =? +((u|*|w) +. s *.  (v|*|w))
+
+
+
+;; Tools.set_epsilon 1e-6
+
+let exponential_addition =
+  let m, a, b, c ,d, e, f = let open Alea in
+    mat4(), scalar(), scalar (), scalar (), scalar (), scalar (), scalar () in
+  let k = a * m + b * m * m + c * eye d4 in
+  let l = d * m +  e * m * m + f * eye d4 in
+  Tools.set_epsilon (fexp (norm_1 k +. norm_1 l) *. 1e-12);
+  "if [a,b] = 0 then exp(a+b) = (exp a) (exp b)" :=
+    exp ( k + l ) =? exp k * exp l
+
+;; Tools.set_epsilon 1e-12
