@@ -260,3 +260,13 @@ let det_is_multilinear =
   let x, y, z, w = slice a x', slice a y', slice a z', slice a w' in
   "det (a+b,...) = det (a,...) + det (b,...)" :=
   +det (mat4 (x+v) y z w) =? +det (mat4 x y z w) + +det (mat4 v y z w)
+
+let scalar_product_is_sym =
+  "(v,w) = (w,v)" :=
+    let v, w = Alea.(mat4(), mat4()) in
+    +(v|*|w) =? +(w|*|v)
+
+let scalar_product_is_linear =
+  "(u + λ v ,w) = (u,w) + λ (v,w)" :=
+    let u,v,w, s = Alea.(mat4(), mat4(), mat4(), u () ) in
+    +(u +  scalar s * v|*|w) =? +((u|*|w) +. s *.  (v|*|w))
