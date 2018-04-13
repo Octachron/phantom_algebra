@@ -27,6 +27,9 @@ let xyrot theta = mat3
     (vec3 (sin theta) (cos theta) 0.)
     (vec3        0.         0.      1.)
 
+let xp1 =
+  " id + 1 " :=
+  map ( (+.) 1.) (eye d2) =? mat2 (vec2 2. 1.) (vec2 1. 2.)
 
 let pi = 4. *. atan 1.
 let r = "Rxy_(π/6)" :=

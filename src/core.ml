@@ -85,12 +85,24 @@ type (+'dim,+'rank) t = Flat_array.t
 module A = struct
 
   include Flat_array
+  let elt_len a =
+    let l = len a in
+    if l = 5 then 4 else l
   let (#.) = get
   let iteri f x =
-    for i = 0 to len x - 1 do
+    for i = 0 to elt_len x - 1 do
       f i x#.i
     done
-
+  let init n f  =
+    let a = create n in
+    if n = 5 then begin
+      for i = 0 to 3 do set a i (f i) done;
+      set a 4 0.
+    end
+    else for i = 0 to n - 1 do
+        set a i (f i)
+      done;
+    a
 
   let copy x =
     let len = len x in
@@ -98,25 +110,22 @@ module A = struct
     iteri (set a) x;
     a
   let make n x =
-    let a = create n in
-    iteri (fun i _ -> set a i x) a;
-    a
+    init n (fun _ -> x)
+
   let from_array x =
     let len = Array.length x in
     let a = create len in
     Array.iteri (set a) x;
     a
 
-  let init n f = let a = create n in
-    for i = 0 to n - 1 do set a i (f i) done;
-    a
-
   let map f x = init (len x) (fun i -> f x#.i)
   let fold f x a = let res = ref x in
-    for i = 0 to len a do res := f !res a#.i done; !res
+    for i = 0 to elt_len a do res := f !res a#.i done; !res
 
   let fold2 f acc x y  = let res = ref acc in
-    for i = 0 to min (len x) (len y) do res := f !res x#.i y#.i done; !res
+    for i = 0 to min (elt_len x) (elt_len y) do
+      res := f !res x#.i y#.i
+    done; !res
 end
 
 
