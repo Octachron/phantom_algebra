@@ -17,7 +17,7 @@ module type Core = sig
   type (+'dim,+'rank) t
   (** Tensor core type:
       - rank is either 2 (for matrix), 1 (for vector) or zero for scalars
-      - dim belongs to {1,2,3,4}.
+      - dim belongs to \{1,2,3,4\}.
   *)
 
   (** Printer function *)
