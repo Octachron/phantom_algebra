@@ -3,7 +3,9 @@ let const_e = exp 1.
 let fexp = exp
 
 open Phantom_algebra.Core
-open[@warning "-33"] Phantom_algebra.Type_functions
+[@@@warning "-33"]
+open Phantom_algebra.Type_functions
+[@@@warning "+33"]
 open Tools
 
 
