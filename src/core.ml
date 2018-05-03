@@ -711,7 +711,7 @@ let clone_7 v = v, v, v, v ,v ,v ,v
 
 
 let commutator m n = m * n - n * m
-let anticommutator m n = m * n - n * m
+let anticommutator m n = m * n + n * m
 
 let trace m =
   let r = ref 0. in

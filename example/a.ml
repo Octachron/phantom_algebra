@@ -125,12 +125,17 @@ let linear =
 let mat_distribution =
   let open Alea in
   let s = scalar () in
+  let s2 = scalar () in
+  let s3 = scalar () in
   let m = mat4 () in
   let n = mat4 () in
   let u = vec4 () in
   let v = vec4 () in
-  "s * (m + n) * (u + v) = s m u + s m v + s n u + s n v" :=
-    s*(m+n)*(u+v) =? s * m * u + s * m * v + s * n * u + s * n * v
+  "s * (m + s2 * n) * (u + s3 * v) = s m u + s s3 m v + s s2 n u + s s2 s3 n v"
+  :=
+    s*(m+ s2 * n)*(u + s3 * v) =?
+    s * m * u
+    + s * s3 * m * v + s * s2 *  n * u + s * s2 * s3 * n * v
 
 let vec_mat =
   let m,n = Alea.(mat4 (),mat4 ()) in
@@ -249,12 +254,17 @@ let trace =
     scalar (trace (a * b * c)) =? scalar ( trace (b * c * a) )
 
 
-let anticommutator =
+let jacobi_for_commutator =
   let a, b ,c = Alea.( mat4(), mat4(), mat4 ()) in
-  let ( ^ ) = anticommutator in
+  let ( ^ ) = commutator in
   "[A,[B,C]] + [B,[C,A]] + [C, [A,B]] = 0 " :=
     (a^(b^c)) + (b^(c^a)) =? ((a^b)^c)
 
+let jacobi_for_cross =
+  let a, b ,c = Alea.( vec3(), vec3(), vec3 ()) in
+  let ( ^ ) = cross in
+  "cross u (cross v w) + cross v cross w u + cross w (cross u v) = 0 " :=
+    (a^(b^c)) + (b^(c^a)) =? ((a^b)^c)
 
 let det_is_antisymmetric =
   let a = [|Alea.vec4() + vec4 1. 0. 0. 0.;
