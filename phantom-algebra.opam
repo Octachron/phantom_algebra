@@ -3,9 +3,10 @@ opam-version: "1.2"
 license: "MIT"
 maintainer: "Florian Angeletti <octa@polychoron.fr>"
 authors: "Florian Angeletti <octa@polychoron.fr>"
-dev-repo: "git+https://github.com/Octachron/phantom-algebra"
-homepage: "https://github.com/Octachron/phantom-algebra"
-bug-reports: "https://github.com/Octachron/phantom-algebra/issues"
+dev-repo: "git+https://github.com/Octachron/phantom_algebra"
+doc: "https://Octachron.github.io/phantom_algebra/docs"
+homepage: "https://github.com/Octachron/phantom_algebra"
+bug-reports: "https://github.com/Octachron/phantom_algebra/issues"
 
 build:[
  ["jbuilder" "build" "-p" name "-j" jobs]
