@@ -569,26 +569,6 @@ let norm_1 = A.fold (fun acc x -> acc +. abs_float x ) 0.
 let norm_q q a =
   (A.fold (fun acc x -> acc +. (abs_float x) **. q ) 0. a) **. (1./.q)
 
-let theta_13 = 5.371920351148152e0
-let pade_13= [|
-  64764752532480000.;
-  32382376266240000.;
-  7771770303897600.;
-  1187353796428800.;
-  129060195264000.;
-  10559470521600.;
-  670442572800.;
-  33522128640.;
-  1323241920.;
-  40840800.;
-  960960.;
-  16380.;
-  182.;
-  1.
-|]
-
-
-
 let (<+>) x y = map2 (+.) x y
 let (<->) x y = map2 (-.) x y
 
@@ -611,6 +591,47 @@ let (-) a b =
 
 let (~-) = map (~-.)
 let (~+) x = scalar x
+
+
+let theta_13 = 5.371920351148152e0
+let pade_13= [|
+  64764752532480000.;
+  32382376266240000.;
+  7771770303897600.;
+  1187353796428800.;
+  129060195264000.;
+  10559470521600.;
+  670442572800.;
+  33522128640.;
+  1323241920.;
+  40840800.;
+  960960.;
+  16380.;
+  182.;
+  1.
+|]
+
+(* Higham, 2005 *)
+let expm a =
+  let b = pade_13 in
+  let norm1 = norm_1 a in
+  let s = min 0 @@ snd @@ frexp (norm1 /. theta_13) in
+  let a = map (fun f -> ldexp f s) a in
+  let a0 = eye (dim a) in
+  let a2 = a *a in let a4 = a2 * a2 in let a6 = a2 * a4 in
+  let u =
+    a *
+    (a6 * ( b.(13) *% a6 + b.(11) *% a4 + b.(9) *% a2)
+     + b.(7) *% a6 + b.(5) *% a4 + b.(3) *% a2 + b.(1) *% a0) in
+  let v =
+    (a6 * ( b.(12) *% a6 + b.(10) *% a4 + b.(8) *% a2)
+     + b.(6) *% a6 + b.(4) *% a4 + b.(2) *% a2 + b.(0) *% a0) in
+  pow_2_k  Int.(-s) ( (u + v) / (v - u) )
+
+let exp m = match rank m with
+  | Scalar | Vector -> map exp m
+  | Matrix -> expm m
+
 
 let normalize x =
   let n = norm x in
@@ -656,27 +677,6 @@ let transpose m =
     done
   done;
   x
-
-(* Higham, 2005 *)
-let expm a =
-  let b = pade_13 in
-  let norm1 = norm_1 a in
-  let s = min 0 @@ snd @@ frexp (norm1 /. theta_13) in
-  let a = map (fun f -> ldexp f s) a in
-  let a0 = eye (dim a) in
-  let a2 = a *a in let a4 = a2 * a2 in let a6 = a2 * a4 in
-  let u =
-    a *
-    (a6 * ( b.(13) *% a6 + b.(11) *% a4 + b.(9) *% a2)
-     + b.(7) *% a6 + b.(5) *% a4 + b.(3) *% a2 + b.(1) *% a0) in
-  let v =
-    (a6 * ( b.(12) *% a6 + b.(10) *% a4 + b.(8) *% a2)
-     + b.(6) *% a6 + b.(4) *% a4 + b.(2) *% a2 + b.(0) *% a0) in
-  pow_2_k  Int.(-s) ( (u + v) / (v - u) )
-
-let exp m = match rank m with
-  | Scalar | Vector -> map exp m
-  | Matrix -> expm m
 
 let floor a = int_of_float ( a#.(0) )
 
