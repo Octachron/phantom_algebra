@@ -3,6 +3,6 @@
 
 (library (
          (name phantom_algebra)
-         (public_name phantom_algebra)
+         (public_name phantom-algebra)
          (preprocess (action (run ${bin:cppo} -V OCAML:${ocaml_version} ${<})))
 ))
