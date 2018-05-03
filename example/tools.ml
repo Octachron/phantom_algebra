@@ -1,6 +1,4 @@
-
 open Phantom_algebra.Core
-open Phantom_algebra.Type_functions
 
 let epsilon = ref 1e-12
 let set_epsilon x = epsilon := x

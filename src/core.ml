@@ -3,9 +3,7 @@ open Type_functions
 module Int = struct
   let(+) = (+)
   let (-) = (-)
-  let (/) = (/)
   let ( * ) = ( * )
-  let ( ~+ ) = ( ~+ )
   let ( ~- ) = ( ~- )
 end
 type _ dim =
@@ -25,26 +23,26 @@ let dim_to_int: type a. a dim -> int = function
   | D3 -> 3
   | D4 -> 4
 
-let unexpected ranks = raise (Interface.Unexpected_ranks ranks)
-
 type (+'input_dim,+'output_dim,+'rank,+'group) index = int
 
 type _ rank = Scalar | Vector | Matrix
 
-let scalar=Scalar
-let vector=Vector
-let matrix=Matrix
-let rank_from_int = function
-  | 0 -> Scalar
-  | 1 -> Vector
-  | 2 -> Matrix
-  | _ -> assert false
+module Rank = struct
+  let scalar=Scalar
+  let vector=Vector
+  let matrix=Matrix
+  let rank_from_int = function
+    | 0 -> Scalar
+    | 1 -> Vector
+    | 2 -> Matrix
+    | _ -> assert false
 
-let rank_to_int = function
-  | Scalar -> 0
-  | Vector -> 1
-  | Matrix -> 2
-
+  let rank_to_int = function
+    | Scalar -> 0
+    | Vector -> 1
+    | Matrix -> 2
+end
+open Rank
 
 let ilen x = 0x3F land (x lsr 18)
 let shift x = 0xFF land (x lsr 16)
@@ -111,12 +109,6 @@ module A = struct
     a
   let make n x =
     init n (fun _ -> x)
-
-  let from_array x =
-    let len = Array.length x in
-    let a = create len in
-    Array.iteri (set a) x;
-    a
 
   let map f x = init (len x) (fun i -> f x#.i)
   let fold f x a = let res = ref x in
@@ -677,8 +669,6 @@ let transpose m =
     done
   done;
   x
-
-let floor a = int_of_float ( a#.(0) )
 
 let eye dim = eye (dim_to_int dim)
 

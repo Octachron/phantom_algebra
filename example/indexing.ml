@@ -1,5 +1,4 @@
 open Phantom_algebra.Core
-open Phantom_algebra.Type_functions
 
 let v = vec2 0. 1.
 let v4 = (vec4 0. 1. 2. 3.)

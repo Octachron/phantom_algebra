@@ -499,7 +499,8 @@ end
 
 module type S = sig
   include Dim
-  include Rank
+  type +_ rank
+  module Rank: Rank with type 'a rank := 'a rank
   include Core
   include Index
   include Indexing with
