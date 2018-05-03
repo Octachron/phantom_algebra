@@ -72,8 +72,10 @@ module type Core = sig
   val map2: (k -> k -> k ) -> ('dim,'rank) t -> ('dim,'rank) t -> ('dim,'rank) t
 
 
-  (** {2 Core linear algebra functions} *)
-  (** [x + y] is the standard vector sum, except for scalar argument
+      (** {2 Core linear algebra functions} *)
+
+  (**
+      [x + y] is the standard vector sum, except for scalar argument
       which are broadcasted to a constant tensor *)
   val (+): ('dim1,('rank1,'rank2,'rank3,'dim1,'dim2,'dim3, _) sum ) t
     -> ('dim2,'rank2) t -> ('dim3,'rank3) t
@@ -122,8 +124,9 @@ module type Core = sig
   val exp: ('dim,'rank) t -> ('dim,'rank) t
 
 
-  (** {2 Scalar products and norms *)
-    (** [ (x|*|y)] is the canonical scalar product *)
+  (** {2 Scalar products and norms} *)
+
+  (** [ (x|*|y)] is the canonical scalar product *)
   val ( |*| ) : ('dim, 'rank) t -> ('dim,'rank) t -> k
 
   (** [norm x] is the canonical 2-norm of x *)
@@ -162,6 +165,7 @@ module type Core = sig
   val ( ^ ): ('dim, _ one) t -> ('dim, _ one ) t -> ('dim, _ two ) t
 
   (** {2 More linear algebra functions } *)
+
   (** [commutator m n] is [m * n - n * m] *)
   val commutator: ('dim, _ two) t -> ('dim, _ two) t -> ('dim, _ two) t
 
