@@ -1,9 +1,14 @@
+# Phantom-algebra — a strongly-typed tensor library à la GLSL
+
 Phantom-algebra is a pure OCaml library implementing strongly-typed
 small tensors with dimensions 0 ≤ 4, rank ≤ 2, and limited to square matrices.
 
 It makes it possible to manipulate vector and matrix expressions with an
-uniform notation:
+uniform notation while still catching non-sensical operations at compile time
 
+# Tutorial
+
+For instance, this extract is valid
 ```OCaml
     open Phantom_algebra.Core
     let v = vec3 1. 2. 3.
@@ -13,7 +18,7 @@ uniform notation:
     let r = w + rot * v
 ```
 
-while still catching non-sensical operaton at compile time
+but adding a vector to a matrix is not, and yields a type error:
 
 ```OCaml
 v + rot
@@ -27,7 +32,7 @@ of scalars, vectors and matrices are much simpler. However, the size of the
 type of higher order function may increase exponentially due to the exotic
 type construction used internally.
 
-It is inspired by GLSL conventions:
+`Phantom-algebra` is inspired by GLSL conventions:
 
   * addition is the usual vector addition, with scalar broadcasted
     to tensors of any dimension and rank
