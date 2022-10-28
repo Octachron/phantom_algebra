@@ -1,0 +1,5 @@
+
+(library
+  (name phantom_algebra)
+  (public_name phantom-algebra)
+)

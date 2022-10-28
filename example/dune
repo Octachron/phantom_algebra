@@ -1,0 +1,4 @@
+(test
+  (name all)
+  (libraries phantom_algebra)
+)

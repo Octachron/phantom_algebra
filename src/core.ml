@@ -711,7 +711,6 @@ let trace m =
   done; !r
 
 ;;
-#if OCAML_MAJOR>=4 && OCAML_MINOR>=6
+
 let (.%()) x = get x
 let (.%[]) x = slice x
-#endif

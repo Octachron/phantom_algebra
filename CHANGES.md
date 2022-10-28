@@ -1,3 +1,7 @@
+1.0.1
+-------
+- dunification
+
 v 1.0
 -----
 - First release of phantom-algebra, a strongly-typed tensor library

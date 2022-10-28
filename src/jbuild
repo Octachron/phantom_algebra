@@ -1,8 +1,0 @@
-(jbuild_version 1)
-
-
-(library (
-         (name phantom_algebra)
-         (public_name phantom-algebra)
-         (preprocess (action (run ${bin:cppo} -V OCAML:${ocaml_version} ${<})))
-))
